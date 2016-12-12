@@ -1,0 +1,8 @@
+eclipse.preferences.version=1
+encoding//src/redfish/rest/v1.py=utf-8
+encoding//src/redfish/ris/__init__.py=utf-8
+encoding//src/redfish/ris/config.py=utf-8
+encoding//src/redfish/ris/ris.py=utf-8
+encoding//src/redfish/ris/rmc.py=utf-8
+encoding//src/redfish/ris/rmc_helper.py=utf-8
+encoding//src/redfish/ris/sharedtypes.py=utf-8

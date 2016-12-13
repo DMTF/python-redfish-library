@@ -12,7 +12,7 @@ setup(name='redfish',
           'Topic :: Communications'
       ],
       keywords='Redfish',
-      url='https://github.com/DMTF/redfish',
+      url='https://github.com/DMTF/python-redfish-library',
       packages=find_packages('src'),
       package_dir={'': 'src'},
       install_requires=[

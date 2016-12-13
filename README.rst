@@ -6,7 +6,7 @@ python-redfish-library
 	:target: https://pypi.python.org/pypi/python-redfish-library
 .. image:: https://img.shields.io/github/release/DMTF/python-redfish-library.svg?maxAge=2592000
 	:target: 
-.. image:: https://img.shields.io/badge/license-Apache%202-blue.svg
+.. image:: https://img.shields.io/badge/License-BSD%203--Clause-blue.svg
 	:target: https://raw.githubusercontent.com/DMTF/python-redfish-library/master/LICENSE
 .. image:: https://img.shields.io/pypi/pyversions/python-redfish-library.svg?maxAge=2592000
 	:target: https://pypi.python.org/pypi/python-redfish-library

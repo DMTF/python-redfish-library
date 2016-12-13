@@ -1,2 +1,115 @@
-# python-redfish-library
-Python library for interacting with devices which support a Redfish Service
+python-redfish-library
+==============
+.. image:: https://travis-ci.org/DMTF/python-redfish-library.svg?branch=master
+    :target: https://travis-ci.org/DMTF/python-redfish-library
+.. image:: https://img.shields.io/pypi/v/python-redfish-library.svg?maxAge=2592000
+	:target: https://pypi.python.org/pypi/python-redfish-library
+.. image:: https://img.shields.io/github/release/DMTF/python-redfish-library.svg?maxAge=2592000
+	:target: 
+.. image:: https://img.shields.io/badge/license-Apache%202-blue.svg
+	:target: https://raw.githubusercontent.com/DMTF/python-redfish-library/master/LICENSE
+.. image:: https://img.shields.io/pypi/pyversions/python-redfish-library.svg?maxAge=2592000
+	:target: https://pypi.python.org/pypi/python-redfish-library
+.. image:: https://api.codacy.com/project/badge/Grade/1283adc3972d42b4a3ddb9b96660bc07
+	:target: https://www.codacy.com/app/rexysmydog/python-redfish-library?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=DMTF/python-redfish-library&amp;utm_campaign=Badge_Grade
+
+
+.. contents:: :depth: 1
+
+Description
+----------
+
+ REST (Representational State Transfer) is a web based software architectural style consisting of a set of constraints that focuses on a system's resources. The Redfish library performs the basic HTTPS operations GET, POST, PUT, PATCH and DELETE on resources using the HATEOAS (Hypermedia as the Engine of Application State) Redfish architecture. API clients allow you to manage and interact with the system through a fixed URL and several URIs. Go to the `wiki <../../wiki>`_ for more details.
+
+Installing
+----------
+
+.. code-block:: console
+
+	pip install python-redfish-library
+
+Building from zip file source
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: console
+
+	python setup.py sdist --formats=zip (this will produce a .zip file)
+	cd dist
+	pip install python-redfish-library-x.x.x.zip
+
+Requirements
+----------
+ No special requirements.
+
+Usage
+----------
+ A set of examples is provided under the examples directory of this project. In addition to the directives present in this paragraph, you will find valuable implementation tips and tricks in those examples.
+
+Import the relevant python module
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ For a Redfish compliant application import the relevant python module.
+ 
+ For Redfish compliant application:
+
+.. code-block:: python
+
+	import redfish
+
+Create a Redfish Object
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ The Redfish Objects contain 3 parameters: the target secured URL (i.e. "https://IP" or "https://X.Y.Z.T"), an user name and its password.
+ To crete a Redfish Object, call the redfish_client method:
+.. code-block:: python
+
+	REDFISH_OBJ = redfish.redfish_client(base_url=login_host, username=login_account, \
+                          password=login_password, default_prefix='/redfish/v1')
+
+Login to the server
+~~~~~~~~~~~~~~~~~~~~~~~~~
+ The login operation is performed when creating the REDFISH_OBJ. You can continue with a basic authentication, but it would less secure.
+
+.. code-block:: python
+
+	REDFISH_OBJ.login(auth="session")
+
+Perform a GET operation
+~~~~~~~~~~~~~~~~~~~~~~~~~
+ A simple GET operation can be performed to obtain the data present in any valid path.
+ An example of rawget operation on the path "/redfish/v1/systems/1 is shown below:
+
+.. code-block:: python
+
+	response = REDFISH_OBJ.get("/redfish/v1/systems/1", None)
+
+Logout the created session
+~~~~~~~~~~~~~~~~~~~~~~~~~
+ Make sure you logout every session you create as it will remain alive until it times out.
+
+.. code-block:: python
+
+	REDFISH_OBJ.logout()
+
+ A logout deletes the current sesssion from the system. The redfish_client object destructor includes a logout statement. 
+
+Contributing
+----------
+
+ 1. Fork it!
+ 2. Create your feature branch: `git checkout -b my-new-feature`
+ 3. Commit your changes: `git commit -am 'Add some feature'`
+ 4. Push to the branch: `git push origin my-new-feature`
+ 5. Submit a pull request :D
+
+History
+----------
+
+  * 01/12/2017: Initial Commit
+
+Copyright and License
+---------------------
+
+::
+
+ Copyright Notice:
+ Copyright 2016 Distributed Management Task Force, Inc. All rights reserved.
+ License: BSD 3-Clause License. For full text see link: https://github.com/DMTF/python-redfish-library/LICENSE.md

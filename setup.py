@@ -5,9 +5,10 @@ setup(name='redfish',
       description='Redsfish Python Library',
 	  author = 'DMTF',
 	  author_email = 'DMTF@DMTF.com',
+	  license='BSD 3-clause "New" or "Revised License"',
       classifiers=[
           'Development Status :: 3 - Alpha',
-          'License :: OSI Approved :: Apache Software License',
+          'License :: OSI Approved :: BSD License',
           'Programming Language :: Python :: 2.7',
           'Topic :: Communications'
       ],

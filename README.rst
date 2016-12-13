@@ -110,4 +110,4 @@ Copyright and License
 
 Copyright Notice:
 Copyright 2016 Distributed Management Task Force, Inc. All rights reserved.
-License: BSD 3-Clause License. For full text see link: `License <https://github.com/DMTF/python-redfish-library/blob/master/LICENSE.md>`_
+License: BSD 3-Clause License. For full text see link: `https://github.com/DMTF/python-redfish-library/blob/master/LICENSE.md <https://github.com/DMTF/python-redfish-library/blob/master/LICENSE.md>`_

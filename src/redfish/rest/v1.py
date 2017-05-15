@@ -879,7 +879,7 @@ class HttpClient(RestClientBase):
         :returns: returns a rest request
 
         """
-        if self.default_prefix in path and path[-1] != '/':
+        if self.default_prefix == path and path[-1] != '/':
             path = path + '/'
         else:
             pass

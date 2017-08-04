@@ -17,7 +17,6 @@ import json
 import base64
 import urllib
 import logging
-import httplib
 
 from collections import (OrderedDict)
 

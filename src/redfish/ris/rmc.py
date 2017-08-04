@@ -576,7 +576,17 @@ class RmcApp(object):
 
     def validate_headers(self, instance, verbose=False):
         skip = False
-
+        try:
+            headervals = instance.resp._http_response.headers.keys()
+            if headervals is not None and len(headervals):
+                allow = list(filter(lambda x:x.lower()=="allow", headervals))
+                if len(allow):
+                    if not "PATCH" in instance.resp._http_response.headers\
+                                                        [allow[0]]:
+                        skip = True
+                return skip
+        except:
+            pass
         try:
             if not any("PATCH" in x for x in instance.resp._http_response.msg.\
                                                                     headers):

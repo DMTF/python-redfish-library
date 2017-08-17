@@ -12,7 +12,8 @@
 import os
 import re
 import logging
-import ConfigParser
+import six
+from six.moves import configparser
 
 #---------End of imports---------
 
@@ -42,7 +43,7 @@ class AutoConfigParser(object):
     def _get_ac_keys(self):
         """Retrieve parse option keys"""
         result = []
-        for key in self.__dict__.keys():
+        for key in six.iterkeys(self.__dict__):
             match = AutoConfigParser._config_pattern.search(key)
             if match:
                 result.append(match.group('confkey'))
@@ -90,26 +91,26 @@ class AutoConfigParser(object):
             return
 
         try:
-            config = ConfigParser.RawConfigParser()
+            config = configparser.RawConfigParser()
             config.read(fname)
             for key in self._get_ac_keys():
                 configval = None
                 try:
                     configval = config.get(self._sectionname, key)
-                except ConfigParser.NoOptionError:
+                except configparser.NoOptionError:
                     # also try with - instead of _
                     try:
                         configval = config.get(self._sectionname, \
                                                         key.replace('_', '-'))
-                    except ConfigParser.NoOptionError:
+                    except configparser.NoOptionError:
                         pass
 
                 if configval is not None and len(configval) > 0:
                     ackey = '_ac__%s' % key
                     self.__dict__[ackey] = configval
-        except ConfigParser.NoOptionError:
+        except configparser.NoOptionError:
             pass
-        except ConfigParser.NoSectionError:
+        except configparser.NoSectionError:
             pass
 
     def save(self, filename=None):
@@ -127,10 +128,10 @@ class AutoConfigParser(object):
         if fname is None or len(fname) == 0:
             return
 
-        config = ConfigParser.RawConfigParser()
+        config = configparser.RawConfigParser()
         try:
             config.add_section(self._sectionname)
-        except ConfigParser.DuplicateSectionError:
+        except configparser.DuplicateSectionError:
             pass # ignored
 
         for key in self._get_ac_keys():

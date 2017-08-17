@@ -27,6 +27,7 @@ from .rmc_helper import (
     NothingSelectedError,
     NothingSelectedSetError,
     InvalidSelectionError,
+    SessionExpired,
     RmcClient,
     RmcConfig,
     RmcCacheManager,

@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(name='redfish',
-      version='1.0.0',
+      version='2.0.0',
       description='Redsfish Python Library',
 	  author = 'DMTF',
 	  author_email = 'DMTF@DMTF.com',

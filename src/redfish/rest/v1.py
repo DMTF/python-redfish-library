@@ -17,12 +17,15 @@ import json
 import base64
 import urllib
 import logging
-import httplib
 
-from StringIO import StringIO
 from collections import (OrderedDict)
 
-import urlparse2 #pylint warning disable
+import six
+from six.moves.urllib.parse import urlparse, urlencode, urlunparse
+from six.moves import http_client
+from six import string_types
+from six import StringIO
+from six import BytesIO
 
 #---------End of imports---------
 
@@ -49,6 +52,9 @@ class DecompressResponseError(Exception):
     """Raised when decompressing response failed."""
     pass
 
+class JsonDecodingError(Exception):
+    """Raised when there is an error in json data."""
+    pass
 class RisObject(dict):
     """Converts a JSON/Rest dict into a object so you can use .property
     notation"""
@@ -63,7 +69,7 @@ class RisObject(dict):
         """
         super(RisObject, self).__init__()
         self.update(**dict((k, self.parse(value)) \
-                                                for k, value in d.iteritems()))
+                                                for k, value in d.items()))
 
     @classmethod
     def parse(cls, value):
@@ -131,7 +137,7 @@ class RestRequest(object):
         except BaseException:
             strvars['body'] = ''
 
-        return u"%(method)s %(path)s\n\n%(body)s" % strvars
+        return "%(method)s %(path)s\n\n%(body)s" % strvars
 
 class RestResponse(object):
     """Returned by Rest requests"""
@@ -200,7 +206,11 @@ class RestResponse(object):
     @property
     def text(self):
         """Property for accessing the data as an unparsed string"""
-        return self.read
+        if isinstance(self.read, str):
+            value = self.read
+        else:
+            value = self.read.decode("utf-8", "ignore")
+        return value
 
     @text.setter
     def text(self, value):
@@ -215,7 +225,7 @@ class RestResponse(object):
     @property
     def dict(self):
         """Property for accessing the data as an dict"""
-        return json.loads(self.text.decode('utf-8', 'ignore'))
+        return json.loads(self.text)
 
     @property
     def obj(self):
@@ -257,11 +267,11 @@ class RestResponse(object):
         """Class string formatter"""
         headerstr = ''
         for header in self.getheaders():
-            headerstr += u'%s %s\n' % (header[0], header[1])
+            headerstr += '%s %s\n' % (header[0], header[1])
 
-        return u"%(status)s\n%(headerstr)s\n\n%(body)s" % \
+        return "%(status)s\n%(headerstr)s\n\n%(body)s" % \
                             {'status': self.status, 'headerstr': headerstr, \
-                             'body': self.text.decode('utf-8', 'ignore')}
+                             'body': self.text}
 
 class JSONEncoder(json.JSONEncoder):
     """JSON Encoder class"""
@@ -328,7 +338,7 @@ class StaticRestResponse(RestResponse):
         if 'Content' in kwargs:
             content = kwargs['Content']
 
-            if isinstance(content, basestring):
+            if isinstance(content, string_types):
                 self._read = content
             else:
                 self._read = json.dumps(content)
@@ -340,7 +350,7 @@ class StaticRestResponse(RestResponse):
         returnlist = list()
 
         if isinstance(self._headers, dict):
-            for key, value in self._headers.iteritems():
+            for key, value in self._headers.items():
                 returnlist.append((key, value))
         else:
             for item in self._headers:
@@ -377,7 +387,7 @@ class RestClientBase(object):
         self.__base_url = base_url
         self.__username = username
         self.__password = password
-        self.__url = urlparse2.urlparse(base_url)
+        self.__url = urlparse(base_url)
         self.__session_key = sessionkey
         self.__authorization_key = None
         self.__session_location = None
@@ -402,12 +412,12 @@ class RestClientBase(object):
         url = url if url else self.__url
         if url.scheme.upper() == "HTTPS":
             if sys.version_info < (2, 7, 9):
-                self._conn = httplib.HTTPSConnection(url.netloc)
+                self._conn = http_client.HTTPSConnection(url.netloc)
             else:
-                self._conn = httplib.HTTPSConnection(url.netloc, \
+                self._conn = http_client.HTTPSConnection(url.netloc, \
                                     context=ssl._create_unverified_context())
         elif url.scheme.upper() == "HTTP":
-            self._conn = httplib.HTTPConnection(url.netloc)
+            self._conn = http_client.HTTPConnection(url.netloc)
         else:
             pass
 
@@ -501,8 +511,8 @@ class RestClientBase(object):
         """Perform an initial get and store the result"""
         try:
             resp = self.get('%s%s' % (self.__url.path, self.default_prefix))
-        except Exception:
-            raise
+        except Exception as excp:
+            raise excp
 
         if resp.status != 200:
             raise ServerDownOrUnreachableError("Server not reachable, " \
@@ -513,8 +523,10 @@ class RestClientBase(object):
 
         try:
             root_data = json.loads(content, "ISO-8859-1")
-        except ValueError, excp:
-            LOGGER.error(u"%s for JSON content %s", excp, content)
+        except TypeError:
+            root_data = json.loads(content)
+        except ValueError as excp:
+            LOGGER.error("%s for JSON content %s", excp, content)
             raise
 
         self.root = RisObject.parse(root_data)
@@ -530,8 +542,12 @@ class RestClientBase(object):
         :returns: returns a rest request with method 'Get'
 
         """
-        return self._rest_request(path, method='GET', args=args, \
+        try:
+            return self._rest_request(path, method='GET', args=args, \
                                                                 headers=headers)
+        except ValueError:
+            LOGGER.debug("Error in json object getting path: %s" % path)
+            raise JsonDecodingError('Error in json decoding.')
 
     def head(self, path, args=None, headers=None):
         """Perform a HEAD request
@@ -555,6 +571,8 @@ class RestClientBase(object):
         :params args: dict.
         :param body: the body to the sent.
         :type body: str.
+        :param headers: list of headers to be appended.
+        :type headers: list.
         :returns: returns a rest request with method 'Post'
 
         """
@@ -570,6 +588,8 @@ class RestClientBase(object):
         :type args: dict.
         :param body: the body to the sent.
         :type body: str.
+        :param headers: list of headers to be appended.
+        :type headers: list.
         :returns: returns a rest request with method 'Put'
 
         """
@@ -585,6 +605,8 @@ class RestClientBase(object):
         :type args: dict.
         :param body: the body to the sent.
         :type body: str.
+        :param headers: list of headers to be appended.
+        :type headers: list.
         :returns: returns a rest request with method 'Patch'
 
         """
@@ -598,6 +620,8 @@ class RestClientBase(object):
         :type path: str.
         :param args: the arguments to delete.
         :type args: dict.
+        :param headers: list of headers to be appended.
+        :type headers: list.
         :returns: returns a rest request with method 'Delete'
 
         """
@@ -646,11 +670,11 @@ class RestClientBase(object):
 
         if body is not None:
             if isinstance(body, dict) or isinstance(body, list):
-                headers['Content-Type'] = u'application/json'
+                headers['Content-Type'] = 'application/json'
                 body = json.dumps(body)
             else:
-                headers['Content-Type'] = u'application/x-www-form-urlencoded'
-                body = urllib.urlencode(body)
+                headers['Content-Type'] = 'application/x-www-form-urlencoded'
+                body = urlencode(body)
 
             if method == 'PUT':
                 resp = self._rest_request(path=path)
@@ -678,19 +702,25 @@ class RestClientBase(object):
 
         if args:
             if method == 'GET':
-                reqpath += '?' + urllib.urlencode(args)
+                reqpath += '?' + urlencode(args)
             elif method == 'PUT' or method == 'POST' or method == 'PATCH':
-                headers['Content-Type'] = u'application/x-www-form-urlencoded'
-                body = urllib.urlencode(args)
+                headers['Content-Type'] = 'application/x-www-form-urlencoded'
+                body = urlencode(args)
 
         restreq = RestRequest(reqpath, method=method, body=body)
 
         attempts = 0
         while attempts < self.MAX_RETRY:
-            if logging.getLogger().isEnabledFor(logging.DEBUG):
+            if LOGGER.isEnabledFor(logging.DEBUG):
                 try:
+                    logbody = None
+                    if restreq.body:
+                        if restreq.body[0] == '{':
+                            logbody = restreq.body
+                        else:
+                            raise
                     LOGGER.debug('HTTP REQUEST: %s\n\tPATH: %s\n\tBODY: %s'% \
-                                (restreq.method, restreq.path, restreq.body))
+                                    (restreq.method, restreq.path, logbody))
                 except:
                     LOGGER.debug('HTTP REQUEST: %s\n\tPATH: %s\n\tBODY: %s'% \
                                 (restreq.method, restreq.path, 'binary body'))
@@ -714,12 +744,12 @@ class RestClientBase(object):
 
                     if resp.getheader('Connection') == 'close':
                         self.__destroy_connection()
-                    if resp.status not in range(300, 399) or \
+                    if resp.status not in list(range(300, 399)) or \
                                                             resp.status == 304:
                         break
 
                     newloc = resp.getheader('location')
-                    newurl = urlparse2.urlparse(newloc)
+                    newurl = urlparse(newloc)
 
                     reqpath = newurl.path
                     self.__init_connection(newurl)
@@ -749,7 +779,7 @@ class RestClientBase(object):
 
         self.__destroy_connection()
         if attempts < self.MAX_RETRY:
-            if logging.getLogger().isEnabledFor(logging.DEBUG):
+            if LOGGER.isEnabledFor(logging.DEBUG):
                 headerstr = ''
 
                 for header in restresp._http_response.msg.headers:
@@ -788,7 +818,7 @@ class RestClientBase(object):
         if auth == AuthMethod.BASIC:
             auth_key = base64.b64encode(('%s:%s' % (self.__username, \
                             self.__password)).encode('utf-8')).decode('utf-8')
-            self.__authorization_key = u'Basic %s' % auth_key
+            self.__authorization_key = 'Basic %s' % auth_key
 
             headers = dict()
             headers['Authorization'] = self.__authorization_key
@@ -809,7 +839,7 @@ class RestClientBase(object):
             resp = self._rest_request(self.login_url, method="POST", \
                                                     body=data, headers=headers)
 
-            LOGGER.info(json.loads(u'%s' % resp.text))
+            LOGGER.info(json.loads('%s' % resp.text))
             LOGGER.info('Login returned code %s: %s', resp.status, resp.text)
 
             self.__session_key = resp.session_key

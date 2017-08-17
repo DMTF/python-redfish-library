@@ -104,6 +104,7 @@ History
 ----------
 
   * 01/12/2017: Initial Commit
+  * 07/28/2017: Release of v2.0.0
 
 Copyright and License
 ---------------------

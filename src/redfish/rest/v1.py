@@ -435,6 +435,14 @@ class RestClientBase(object):
         self._conn = None
         self._conn_count = 0
 
+    def __enter__(self):
+        self.login()
+        return self
+
+    def __exit__(self, exc_type, exc_value, exc_traceback):
+        self.logout()
+        self.__destroy_connection()
+
     def get_username(self):
         """Return used user name"""
         return self.__username

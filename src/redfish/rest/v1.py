@@ -585,8 +585,8 @@ class RestClientBase(object):
         :params args: dict.
         :param body: the body to the sent.
         :type body: str.
-        :param headers: list of headers to be appended.
-        :type headers: list.
+        :param headers: dict of headers to be appended.
+        :type headers: dict.
         :returns: returns a rest request with method 'Post'
 
         """
@@ -602,8 +602,8 @@ class RestClientBase(object):
         :type args: dict.
         :param body: the body to the sent.
         :type body: str.
-        :param headers: list of headers to be appended.
-        :type headers: list.
+        :param headers: dict of headers to be appended.
+        :type headers: dict.
         :returns: returns a rest request with method 'Put'
 
         """
@@ -619,8 +619,8 @@ class RestClientBase(object):
         :type args: dict.
         :param body: the body to the sent.
         :type body: str.
-        :param headers: list of headers to be appended.
-        :type headers: list.
+        :param headers: dict of headers to be appended.
+        :type headers: dict.
         :returns: returns a rest request with method 'Patch'
 
         """
@@ -634,8 +634,8 @@ class RestClientBase(object):
         :type path: str.
         :param args: the arguments to delete.
         :type args: dict.
-        :param headers: list of headers to be appended.
-        :type headers: list.
+        :param headers: dict of headers to be appended.
+        :type headers: dict.
         :returns: returns a rest request with method 'Delete'
 
         """

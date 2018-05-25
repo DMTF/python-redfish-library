@@ -39,7 +39,7 @@ Building from zip file source
 
 Requirements
 ----------
- No special requirements.
+ Ensure the system does not have the OpenStack "python-redfish" module installed on the target system.  This module is using a conflicting package name that this library already uses.  The module in question can be found here: https://pypi.org/project/python-redfish/
 
 Usage
 ----------

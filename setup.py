@@ -2,10 +2,9 @@ from setuptools import setup, find_packages
 
 setup(name='redfish',
       version='2.0.0',
-      description='Redsfish Python Library',
-	  author = 'DMTF',
-	  author_email = 'DMTF@DMTF.com',
-	  license='BSD 3-clause "New" or "Revised License"',
+      description='Redfish Python Library',
+      author = 'DMTF, https://www.dmtf.org/standards/feedback',
+      license='BSD 3-clause "New" or "Revised License"',
       classifiers=[
           'Development Status :: 3 - Alpha',
           'License :: OSI Approved :: BSD License',

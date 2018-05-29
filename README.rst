@@ -2,14 +2,14 @@ python-redfish-library
 ==============
 .. image:: https://travis-ci.org/DMTF/python-redfish-library.svg?branch=master
     :target: https://travis-ci.org/DMTF/python-redfish-library
-.. image:: https://img.shields.io/pypi/v/python-redfish-library.svg?maxAge=2592000
-	:target: https://pypi.python.org/pypi/python-redfish-library
+.. image:: https://img.shields.io/pypi/v/redfish.svg?maxAge=2592000
+	:target: https://pypi.python.org/pypi/redfish
 .. image:: https://img.shields.io/github/release/DMTF/python-redfish-library.svg?maxAge=2592000
 	:target: 
 .. image:: https://img.shields.io/badge/License-BSD%203--Clause-blue.svg
 	:target: https://raw.githubusercontent.com/DMTF/python-redfish-library/master/LICENSE
-.. image:: https://img.shields.io/pypi/pyversions/python-redfish-library.svg?maxAge=2592000
-	:target: https://pypi.python.org/pypi/python-redfish-library
+.. image:: https://img.shields.io/pypi/pyversions/redfish.svg?maxAge=2592000
+	:target: https://pypi.python.org/pypi/redfish
 .. image:: https://api.codacy.com/project/badge/Grade/1283adc3972d42b4a3ddb9b96660bc07
 	:target: https://www.codacy.com/app/rexysmydog/python-redfish-library?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=DMTF/python-redfish-library&amp;utm_campaign=Badge_Grade
 
@@ -26,7 +26,7 @@ Installing
 
 .. code-block:: console
 
-	pip install python-redfish-library
+	pip install redfish
 
 Building from zip file source
 ~~~~~~~~~~~~~~~~~~~~~~~~~

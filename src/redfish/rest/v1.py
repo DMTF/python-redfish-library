@@ -29,6 +29,12 @@ from six import BytesIO
 
 #---------End of imports---------
 
+#---------Python 3 support---------
+
+if sys.version_info > (3,):
+    buffer = memoryview
+
+#---------End of Python 3 support---------
 
 #---------Debug logger---------
 
@@ -429,6 +435,14 @@ class RestClientBase(object):
         self._conn = None
         self._conn_count = 0
 
+    def __enter__(self):
+        self.login()
+        return self
+
+    def __exit__(self, exc_type, exc_value, exc_traceback):
+        self.logout()
+        self.__destroy_connection()
+
     def get_username(self):
         """Return used user name"""
         return self.__username
@@ -501,8 +515,8 @@ class RestClientBase(object):
     def set_authorization_key(self, authorization_key):
         """Set authorization key
 
-        :param session_location: The session_location to be set.
-        :type session_location: str
+        :param authorization_key: The authorization_key to be set.
+        :type authorization_key: str
 
         """
         self.__authorization_key = authorization_key
@@ -571,8 +585,8 @@ class RestClientBase(object):
         :params args: dict.
         :param body: the body to the sent.
         :type body: str.
-        :param headers: list of headers to be appended.
-        :type headers: list.
+        :param headers: dict of headers to be appended.
+        :type headers: dict.
         :returns: returns a rest request with method 'Post'
 
         """
@@ -588,8 +602,8 @@ class RestClientBase(object):
         :type args: dict.
         :param body: the body to the sent.
         :type body: str.
-        :param headers: list of headers to be appended.
-        :type headers: list.
+        :param headers: dict of headers to be appended.
+        :type headers: dict.
         :returns: returns a rest request with method 'Put'
 
         """
@@ -605,8 +619,8 @@ class RestClientBase(object):
         :type args: dict.
         :param body: the body to the sent.
         :type body: str.
-        :param headers: list of headers to be appended.
-        :type headers: list.
+        :param headers: dict of headers to be appended.
+        :type headers: dict.
         :returns: returns a rest request with method 'Patch'
 
         """
@@ -620,8 +634,8 @@ class RestClientBase(object):
         :type path: str.
         :param args: the arguments to delete.
         :type args: dict.
-        :param headers: list of headers to be appended.
-        :type headers: list.
+        :param headers: dict of headers to be appended.
+        :type headers: dict.
         :returns: returns a rest request with method 'Delete'
 
         """
@@ -632,7 +646,7 @@ class RestClientBase(object):
         """Get the request headers
 
         :param headers: additional headers to be utilized
-        :type headers: str
+        :type headers: dict
         :returns: returns headers
 
         """
@@ -710,6 +724,7 @@ class RestClientBase(object):
         restreq = RestRequest(reqpath, method=method, body=body)
 
         attempts = 0
+        restresp = None
         while attempts < self.MAX_RETRY:
             if LOGGER.isEnabledFor(logging.DEBUG):
                 try:
@@ -718,7 +733,7 @@ class RestClientBase(object):
                         if restreq.body[0] == '{':
                             logbody = restreq.body
                         else:
-                            raise
+                            raise ValueError('Body of message is binary')
                     LOGGER.debug('HTTP REQUEST: %s\n\tPATH: %s\n\tBODY: %s'% \
                                     (restreq.method, restreq.path, logbody))
                 except:
@@ -782,18 +797,21 @@ class RestClientBase(object):
             if LOGGER.isEnabledFor(logging.DEBUG):
                 headerstr = ''
 
-                for header in restresp._http_response.msg.headers:
-                    headerstr += '\t' + header.rstrip() + '\n'
+                if restresp is not None:
+                    for header in restresp.getheaders():
+                        headerstr += '\t' + header[0] + ': ' + header[1] + '\n'
 
-                try:
-                    LOGGER.debug('HTTP RESPONSE for %s:\nCode: %s\nHeaders:\n' \
-                             '%s\nBody Response of %s: %s'%\
-                             (restresp.request.path,\
-                            str(restresp._http_response.status)+ ' ' + \
-                            restresp._http_response.reason, \
-                            headerstr, restresp.request.path, restresp.read))
-                except:
-                    LOGGER.debug('HTTP RESPONSE:\nCode:%s', (restresp))
+                    try:
+                        LOGGER.debug('HTTP RESPONSE for %s:\nCode: %s\nHeaders:\n' \
+                                 '%s\nBody Response of %s: %s'%\
+                                 (restresp.request.path,
+                                str(restresp._http_response.status)+ ' ' + \
+                                restresp._http_response.reason,
+                                headerstr, restresp.request.path, restresp.read))
+                    except:
+                        LOGGER.debug('HTTP RESPONSE:\nCode:%s', (restresp))
+                else:
+                    LOGGER.debug('HTTP RESPONSE: <No HTTP Response obtained>')
 
             return restresp
         else:
@@ -921,7 +939,7 @@ class HttpClient(RestClientBase):
         """Get the request headers for HTTP client
 
         :param headers: additional headers to be utilized
-        :type headers: str
+        :type headers: dict
         :returns: returns request headers
 
         """

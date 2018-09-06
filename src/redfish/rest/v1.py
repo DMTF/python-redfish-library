@@ -61,6 +61,11 @@ class DecompressResponseError(Exception):
 class JsonDecodingError(Exception):
     """Raised when there is an error in json data."""
     pass
+
+class BadRequestError(Exception): 
+    """Raised when bad request made to server."""
+    pass
+
 class RisObject(dict):
     """Converts a JSON/Rest dict into a object so you can use .property
     notation"""
@@ -880,6 +885,10 @@ class RestClientBase(object):
             session_loc = self.__session_location.replace(self.__base_url, '')
 
             resp = self.delete(session_loc)
+            if resp.status != 200:
+                raise BadRequestError("Invalid session resource: %s, "\
+                                   "return code: %d" % session_loc, resp.status)
+
             LOGGER.info("User logged out: %s", resp.text)
 
             self.__session_key = None

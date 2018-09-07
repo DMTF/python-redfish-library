@@ -1,5 +1,6 @@
 python-redfish-library
 ==============
+
 .. image:: https://travis-ci.org/DMTF/python-redfish-library.svg?branch=master
     :target: https://travis-ci.org/DMTF/python-redfish-library
 .. image:: https://img.shields.io/pypi/v/redfish.svg?maxAge=2592000
@@ -16,10 +17,12 @@ python-redfish-library
 
 .. contents:: :depth: 1
 
+
 Description
 ----------
 
  REST (Representational State Transfer) is a web based software architectural style consisting of a set of constraints that focuses on a system's resources. The Redfish library performs the basic HTTPS operations GET, POST, PUT, PATCH and DELETE on resources using the HATEOAS (Hypermedia as the Engine of Application State) Redfish architecture. API clients allow you to manage and interact with the system through a fixed URL and several URIs. Go to the `wiki <../../wiki>`_ for more details.
+
 
 Installing
 ----------
@@ -27,6 +30,7 @@ Installing
 .. code-block:: console
 
 	pip install redfish
+
 
 Building from zip file source
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -37,16 +41,22 @@ Building from zip file source
 	cd dist
 	pip install python-redfish-library-x.x.x.zip
 
+
 Requirements
 ----------
+
  Ensure the system does not have the OpenStack "python-redfish" module installed on the target system.  This module is using a conflicting package name that this library already uses.  The module in question can be found here: https://pypi.org/project/python-redfish/
+
 
 Usage
 ----------
+
  A set of examples is provided under the examples directory of this project. In addition to the directives present in this paragraph, you will find valuable implementation tips and tricks in those examples.
+
 
 Import the relevant python module
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
  For a Redfish compliant application import the relevant python module.
  
  For Redfish compliant application:
@@ -55,8 +65,10 @@ Import the relevant python module
 
 	import redfish
 
+
 Create a Redfish Object
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
  The Redfish Objects contain 3 parameters: the target secured URL (i.e. "https://IP" or "https://X.Y.Z.T"), an user name and its password.
  To crete a Redfish Object, call the redfish_client method:
 .. code-block:: python
@@ -64,16 +76,20 @@ Create a Redfish Object
 	REDFISH_OBJ = redfish.redfish_client(base_url=login_host, username=login_account, \
                           password=login_password, default_prefix='/redfish/v1')
 
+
 Login to the server
 ~~~~~~~~~~~~~~~~~~~~~~~~~
+
  The login operation is performed when creating the REDFISH_OBJ. You can continue with a basic authentication, but it would less secure.
 
 .. code-block:: python
 
 	REDFISH_OBJ.login(auth="session")
 
+
 Perform a GET operation
 ~~~~~~~~~~~~~~~~~~~~~~~~~
+
  A simple GET operation can be performed to obtain the data present in any valid path.
  An example of rawget operation on the path "/redfish/v1/systems/1 is shown below:
 
@@ -81,8 +97,10 @@ Perform a GET operation
 
 	response = REDFISH_OBJ.get("/redfish/v1/systems/1", None)
 
+
 Logout the created session
 ~~~~~~~~~~~~~~~~~~~~~~~~~
+
  Make sure you logout every session you create as it will remain alive until it times out.
 
 .. code-block:: python
@@ -90,6 +108,7 @@ Logout the created session
 	REDFISH_OBJ.logout()
 
  A logout deletes the current sesssion from the system. The redfish_client object destructor includes a logout statement. 
+
 
 Contributing
 ----------
@@ -100,11 +119,6 @@ Contributing
  4. Push to the branch: `git push origin my-new-feature`
  5. Submit a pull request :D
 
-History
-----------
-
-  * 01/12/2017: Initial Commit
-  * 07/28/2017: Release of v2.0.0
 
 Release Process
 ----------
@@ -114,6 +128,7 @@ Release Process
 3. Push changes to Github
 4. Create a new release in Github
 5. Push the new library version to pypi.org
+
 
 Copyright and License
 ---------------------

@@ -106,9 +106,18 @@ History
   * 01/12/2017: Initial Commit
   * 07/28/2017: Release of v2.0.0
 
+Release Process
+----------
+
+1. Update `CHANGELOG.md` with the list of changes since the last release
+2. Update the `__version__` variable in `src/redfish/__init__.py`, and `setup.py` to reflect the new library version
+3. Push changes to Github
+4. Create a new release in Github
+5. Push the new library version to pypi.org
+
 Copyright and License
 ---------------------
 
 Copyright Notice:
-Copyright 2016 Distributed Management Task Force, Inc. All rights reserved.
+Copyright 2016-2018 Distributed Management Task Force, Inc. All rights reserved.
 License: BSD 3-Clause License. For full text see link: `https://github.com/DMTF/python-redfish-library/blob/master/LICENSE.md <https://github.com/DMTF/python-redfish-library/blob/master/LICENSE.md>`_

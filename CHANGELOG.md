@@ -1,5 +1,8 @@
 # Change Log
 
+## [2.0.2] - 2018-09-07
+- Added handling for bad or dummy delete requests when logging out of a service
+
 ## [2.0.1] - 2018-05-25
 - Adjusting setup.py to contain correct information
 

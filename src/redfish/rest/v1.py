@@ -868,7 +868,7 @@ class RestClientBase(object):
             self.__session_key = resp.session_key
             self.__session_location = resp.session_location
 
-            if not self.__session_key and not resp.status == 200:
+            if not self.__session_key and resp.status not in [200, 201, 202, 204]:
                 #If your REST client has a delay for fail attempts added it here
                 delay = 0
                 raise InvalidCredentialsError(delay)
@@ -885,9 +885,9 @@ class RestClientBase(object):
             session_loc = self.__session_location.replace(self.__base_url, '')
 
             resp = self.delete(session_loc)
-            if resp.status != 200:
+            if resp.status not in [200, 202, 204]:
                 raise BadRequestError("Invalid session resource: %s, "\
-                                   "return code: %d" % session_loc, resp.status)
+                                   "return code: %d" % (session_loc, resp.status))
 
             LOGGER.info("User logged out: %s", resp.text)
 

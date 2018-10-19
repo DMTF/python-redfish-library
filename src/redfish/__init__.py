@@ -6,11 +6,12 @@
 
 """ Redfish restful library """
 
-__all__ = ['rest', 'ris']
+__all__ = ['rest', 'ris', 'discovery']
 __version__ = "2.0.1"
 
 from redfish.rest.v1 import redfish_client
 from redfish.rest.v1 import AuthMethod
+from redfish.discovery.discovery import discover_ssdp
 import logging
 
 def redfish_logger(file_name, log_format, log_level=logging.ERROR):

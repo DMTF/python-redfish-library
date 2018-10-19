@@ -379,7 +379,8 @@ class RestClientBase(object):
     MAX_RETRY = 10
 
     def __init__(self, base_url, username=None, password=None,
-                                default_prefix='/redfish/v1/', sessionkey=None):
+                                default_prefix='/redfish/v1/', sessionkey=None,
+                                capath=None, cafile=None):
         """Initialization of the base class RestClientBase
 
         :param base_url: The URL of the remote system
@@ -392,6 +393,10 @@ class RestClientBase(object):
         :type default_prefix: str
         :param sessionkey: session key for the current login of base_url
         :type sessionkey: str
+        :param capath: Path to a directory containing CA certificates
+        :type capath: str
+        :param cafile: Path to a file of CA certs
+        :type cafile: str
 
         """
 
@@ -406,6 +411,8 @@ class RestClientBase(object):
         self._conn_count = 0
         self.login_url = None
         self.default_prefix = default_prefix
+        self.capath = capath
+        self.cafile = cafile
 
         self.__init_connection()
         self.get_root_object()
@@ -425,8 +432,13 @@ class RestClientBase(object):
             if sys.version_info < (2, 7, 9):
                 self._conn = http_client.HTTPSConnection(url.netloc)
             else:
-                self._conn = http_client.HTTPSConnection(url.netloc, \
-                                    context=ssl._create_unverified_context())
+                if self.cafile or self.capath is not None:
+                    ssl_context = ssl.create_default_context(
+                        capath=self.capath, cafile=self.cafile)
+                else:
+                    ssl_context = ssl._create_unverified_context()
+                self._conn = http_client.HTTPSConnection(url.netloc,
+                                                         context=ssl_context)
         elif url.scheme.upper() == "HTTP":
             self._conn = http_client.HTTPConnection(url.netloc)
         else:
@@ -868,7 +880,7 @@ class RestClientBase(object):
             self.__session_key = resp.session_key
             self.__session_location = resp.session_location
 
-            if not self.__session_key and not resp.status == 200:
+            if not self.__session_key and resp.status not in [200, 201, 202, 204]:
                 #If your REST client has a delay for fail attempts added it here
                 delay = 0
                 raise InvalidCredentialsError(delay)
@@ -885,9 +897,9 @@ class RestClientBase(object):
             session_loc = self.__session_location.replace(self.__base_url, '')
 
             resp = self.delete(session_loc)
-            if resp.status != 200:
+            if resp.status not in [200, 202, 204]:
                 raise BadRequestError("Invalid session resource: %s, "\
-                                   "return code: %d" % session_loc, resp.status)
+                                   "return code: %d" % (session_loc, resp.status))
 
             LOGGER.info("User logged out: %s", resp.text)
 
@@ -898,7 +910,9 @@ class RestClientBase(object):
 class HttpClient(RestClientBase):
     """A client for Rest"""
     def __init__(self, base_url, username=None, password=None, \
-                                default_prefix='/redfish/v1/', sessionkey=None):
+                                default_prefix='/redfish/v1/', \
+                                sessionkey=None, capath=None, \
+                                cafile=None):
         """Initialize HttpClient
         
         :param base_url: The url of the remote system
@@ -911,11 +925,16 @@ class HttpClient(RestClientBase):
         :type default_prefix: str
         :param sessionkey: session key for the current login of base_url
         :type sessionkey: str
+        :param capath: Path to a directory containing CA certificates
+        :type capath: str
+        :param cafile: Path to a file of CA certs
+        :type cafile: str
         
         """
         super(HttpClient, self).__init__(base_url, username=username, \
                             password=password, default_prefix=default_prefix, \
-                            sessionkey=sessionkey)
+                            sessionkey=sessionkey, capath=capath, \
+                            cafile=cafile)
 
         self.login_url = self.root.Links.Sessions['@odata.id']
 
@@ -958,7 +977,9 @@ class HttpClient(RestClientBase):
         return headers
 
 def redfish_client(base_url=None, username=None, password=None, \
-                                default_prefix='/redfish/v1/', sessionkey=None):
+                                default_prefix='/redfish/v1/', \
+                                sessionkey=None, capath=None, \
+                                cafile=None):
     """Create and return appropriate REDFISH client instance."""
     """ Instantiates appropriate Redfish object based on existing"""
     """ configuration. Use this to retrieve a pre-configured Redfish object
@@ -973,9 +994,14 @@ def redfish_client(base_url=None, username=None, password=None, \
     :type default_prefix: str
     :param sessionkey: session key credential for current login
     :type sessionkey: str
+    :param capath: Path to a directory containing CA certificates
+    :type capath: str
+    :param cafile: Path to a file of CA certs
+    :type cafile: str
     :returns: a client object.
 
     """
     return HttpClient(base_url=base_url, username=username, password=password, \
-                        default_prefix=default_prefix, sessionkey=sessionkey)
+                        default_prefix=default_prefix, sessionkey=sessionkey, \
+                        capath=capath, cafile=cafile)
 

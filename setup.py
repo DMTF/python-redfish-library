@@ -7,9 +7,10 @@ with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
     long_description = f.read()
 
 setup(name='redfish',
-      version='2.0.2',
+      version='2.0.3',
       description='Redfish Python Library',
       long_description=long_description,
+      long_description_content_type='text/x-rst'
       author = 'DMTF, https://www.dmtf.org/standards/feedback',
       license='BSD 3-clause "New" or "Revised License"',
       classifiers=[

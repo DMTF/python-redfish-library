@@ -1,5 +1,9 @@
 # Change Log
 
+## [2.0.3] - 2018-10-19
+- Fixed handling of other successful HTTP responses (201, 202, and 204)
+- Added support for being able to check the certificate of a service
+
 ## [2.0.2] - 2018-09-07
 - Added handling for bad or dummy delete requests when logging out of a service
 

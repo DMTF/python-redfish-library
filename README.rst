@@ -39,7 +39,7 @@ Building from zip file source
 
 	python setup.py sdist --formats=zip (this will produce a .zip file)
 	cd dist
-	pip install python-redfish-library-x.x.x.zip
+	pip install redfish-x.x.x.zip
 
 
 Requirements

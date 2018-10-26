@@ -1,5 +1,8 @@
 # Change Log
 
+## [2.0.4] - 2018-10-26
+- Added discovery module with SSDP support
+
 ## [2.0.3] - 2018-10-19
 - Fixed handling of other successful HTTP responses (201, 202, and 204)
 - Added support for being able to check the certificate of a service

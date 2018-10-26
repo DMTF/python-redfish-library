@@ -124,10 +124,11 @@ Release Process
 ----------
 
 1. Update `CHANGELOG.md` with the list of changes since the last release
-2. Update the `__version__` variable in `src/redfish/__init__.py`, and `setup.py` to reflect the new library version
+2. Update the ``__version__`` variable in ``src/redfish/__init__.py``, and ``setup.py`` to reflect the new library version
 3. Push changes to Github
 4. Create a new release in Github
 5. Push the new library version to pypi.org
+    - ``python setup.py sdist upload -r pypi``
 
 
 Copyright and License

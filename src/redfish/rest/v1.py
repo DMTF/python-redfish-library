@@ -790,9 +790,9 @@ class RestClientBase(object):
 
                 try:
                     if restresp.getheader('content-encoding') == "gzip":
-                        compressedfile = StringIO(restresp.text)
+                        compressedfile = BytesIO(restresp.read)
                         decompressedfile = gzip.GzipFile(fileobj=compressedfile)
-                        restresp.text = decompressedfile.read()
+                        restresp.text = decompressedfile.read().decode("utf-8")
                 except Exception as excp:
                     LOGGER.error('Error occur while decompressing body: %s', \
                                                                         excp)

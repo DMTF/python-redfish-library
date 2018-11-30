@@ -1,5 +1,8 @@
 # Change Log
 
+## [2.0.5] - 2018-11-30
+- Fixed handling of gzip content encoding
+
 ## [2.0.4] - 2018-10-26
 - Added discovery module with SSDP support
 

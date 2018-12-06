@@ -91,12 +91,22 @@ Perform a GET operation
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
  A simple GET operation can be performed to obtain the data present in any valid path.
- An example of rawget operation on the path "/redfish/v1/systems/1 is shown below:
+ An example of rawget operation on the path "/redfish/v1/systems/1" is shown below:
 
 .. code-block:: python
 
 	response = REDFISH_OBJ.get("/redfish/v1/systems/1", None)
 
+Perform a POST operation
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+ A POST operation can be performed to create a resource or perform an action.
+ An example of a POST operation on the path "/redfish/v1/systems/1/Actions/ComputerSystem.Reset" is shown below:
+
+.. code-block:: python
+
+	body = {"ResetType": "GracefulShutdown"}
+	response = REDFISH_OBJ.post("/redfish/v1/systems/1/Actions/ComputerSystem.Reset", body=body)
 
 Logout the created session
 ~~~~~~~~~~~~~~~~~~~~~~~~~

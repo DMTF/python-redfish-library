@@ -735,8 +735,10 @@ class RestClientBase(object):
             if method == 'GET':
                 reqpath += '?' + urlencode(args)
             elif method == 'PUT' or method == 'POST' or method == 'PATCH':
-                headers['Content-Type'] = 'application/x-www-form-urlencoded'
-                body = urlencode(args)
+                LOGGER.warning('For POST, PUT and PATCH methods, the provided "args" parameter "{}" is ignored.'
+                               .format(args))
+                if not body:
+                    LOGGER.warning('Use the "body" parameter to supply the request payload.')
 
         restreq = RestRequest(reqpath, method=method, body=body)
 

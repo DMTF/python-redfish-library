@@ -1,5 +1,8 @@
 # Change Log
 
+## [2.0.6] - 2019-01-11
+- Removed usage of setting the Content-Type header to application/x-www-form-urlencoded for PUT, POST, and PATCH methods
+
 ## [2.0.5] - 2018-11-30
 - Fixed handling of gzip content encoding
 

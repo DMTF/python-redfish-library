@@ -62,7 +62,7 @@ class JsonDecodingError(Exception):
     """Raised when there is an error in json data."""
     pass
 
-class BadRequestError(Exception): 
+class BadRequestError(Exception):
     """Raised when bad request made to server."""
     pass
 
@@ -73,10 +73,10 @@ class RisObject(dict):
 
     def __init__(self, d):
         """Initialize RisObject
-        
+
         :param d: dictionary to be parsed
         :type d: dict
-        
+
         """
         super(RisObject, self).__init__()
         self.update(**dict((k, self.parse(value)) \
@@ -85,13 +85,13 @@ class RisObject(dict):
     @classmethod
     def parse(cls, value):
         """Parse for RIS value
-        
+
         :param cls: class referenced from class method
         :type cls: RisObject
         :param value: value to be parsed
         :type value: data type
         :returns: returns parsed value
-        
+
         """
         if isinstance(value, dict):
             return cls(value)
@@ -104,14 +104,14 @@ class RestRequest(object):
     """Holder for Request information"""
     def __init__(self, path, method='GET', body=''):
         """Initialize RestRequest
-        
+
         :param path: path within tree
         :type path: str
         :param method: method to be implemented
         :type method: str
         :param body: body payload for the rest call
         :type body: dict
-        
+
         """
         self._path = path
         self._body = body
@@ -154,12 +154,12 @@ class RestResponse(object):
     """Returned by Rest requests"""
     def __init__(self, rest_request, http_response):
         """Initialize RestResponse
-        
+
         :params rest_request: Holder for request information
         :type rest_request: RestRequest object
         :params http_response: Response from HTTP
         :type http_response: HTTPResponse
-        
+
         """
         self._read = None
         self._status = None
@@ -376,11 +376,11 @@ class AuthMethod(object):
 
 class RestClientBase(object):
     """Base class for RestClients"""
-    MAX_RETRY = 10
 
     def __init__(self, base_url, username=None, password=None,
                                 default_prefix='/redfish/v1/', sessionkey=None,
-                                capath=None, cafile=None):
+                                capath=None, cafile=None, timeout=None,
+                                max_retry=None):
         """Initialization of the base class RestClientBase
 
         :param base_url: The URL of the remote system
@@ -397,6 +397,10 @@ class RestClientBase(object):
         :type capath: str
         :param cafile: Path to a file of CA certs
         :type cafile: str
+        :param timeout: Timeout in seconds for the initial connection
+        :type timeout: int
+        :param max_retry: Number of times a request will retry after a timeout
+        :type max_retry: int
 
         """
 
@@ -409,6 +413,8 @@ class RestClientBase(object):
         self.__session_location = None
         self._conn = None
         self._conn_count = 0
+        self._timeout = timeout
+        self._max_retry = max_retry if max_retry is not None else 10
         self.login_url = None
         self.default_prefix = default_prefix
         self.capath = capath
@@ -430,7 +436,8 @@ class RestClientBase(object):
         url = url if url else self.__url
         if url.scheme.upper() == "HTTPS":
             if sys.version_info < (2, 7, 9):
-                self._conn = http_client.HTTPSConnection(url.netloc)
+                self._conn = http_client.HTTPSConnection(url.netloc,
+                                                         timeout=self._timeout)
             else:
                 if self.cafile or self.capath is not None:
                     ssl_context = ssl.create_default_context(
@@ -438,9 +445,11 @@ class RestClientBase(object):
                 else:
                     ssl_context = ssl._create_unverified_context()
                 self._conn = http_client.HTTPSConnection(url.netloc,
-                                                         context=ssl_context)
+                                                         context=ssl_context,
+                                                         timeout=self._timeout)
         elif url.scheme.upper() == "HTTP":
-            self._conn = http_client.HTTPConnection(url.netloc)
+            self._conn = http_client.HTTPConnection(url.netloc,
+                                                    timeout=self._timeout)
         else:
             pass
 
@@ -744,7 +753,7 @@ class RestClientBase(object):
 
         attempts = 0
         restresp = None
-        while attempts < self.MAX_RETRY:
+        while attempts <= self._max_retry:
             if LOGGER.isEnabledFor(logging.DEBUG):
                 try:
                     logbody = None
@@ -812,7 +821,7 @@ class RestClientBase(object):
                 break
 
         self.__destroy_connection()
-        if attempts < self.MAX_RETRY:
+        if attempts <= self._max_retry:
             if LOGGER.isEnabledFor(logging.DEBUG):
                 headerstr = ''
 
@@ -914,9 +923,10 @@ class HttpClient(RestClientBase):
     def __init__(self, base_url, username=None, password=None, \
                                 default_prefix='/redfish/v1/', \
                                 sessionkey=None, capath=None, \
-                                cafile=None):
+                                cafile=None, timeout=None, \
+                                max_retry=None):
         """Initialize HttpClient
-        
+
         :param base_url: The url of the remote system
         :type base_url: str
         :param username: The user name used for authentication
@@ -931,12 +941,17 @@ class HttpClient(RestClientBase):
         :type capath: str
         :param cafile: Path to a file of CA certs
         :type cafile: str
-        
+        :param timeout: Timeout in seconds for the initial connection
+        :type timeout: int
+        :param max_retry: Number of times a request will retry after a timeout
+        :type max_retry: int
+
         """
         super(HttpClient, self).__init__(base_url, username=username, \
                             password=password, default_prefix=default_prefix, \
                             sessionkey=sessionkey, capath=capath, \
-                            cafile=cafile)
+                            cafile=cafile, timeout=timeout, \
+                            max_retry=max_retry)
 
         self.login_url = self.root.Links.Sessions['@odata.id']
 
@@ -981,7 +996,8 @@ class HttpClient(RestClientBase):
 def redfish_client(base_url=None, username=None, password=None, \
                                 default_prefix='/redfish/v1/', \
                                 sessionkey=None, capath=None, \
-                                cafile=None):
+                                cafile=None, timeout=None, \
+                                max_retry=None):
     """Create and return appropriate REDFISH client instance."""
     """ Instantiates appropriate Redfish object based on existing"""
     """ configuration. Use this to retrieve a pre-configured Redfish object
@@ -1000,10 +1016,14 @@ def redfish_client(base_url=None, username=None, password=None, \
     :type capath: str
     :param cafile: Path to a file of CA certs
     :type cafile: str
+    :param timeout: Timeout in seconds for the initial connection
+    :type timeout: int
+    :param max_retry: Number of times a request will retry after a timeout
+    :type max_retry: int
     :returns: a client object.
 
     """
     return HttpClient(base_url=base_url, username=username, password=password, \
                         default_prefix=default_prefix, sessionkey=sessionkey, \
-                        capath=capath, cafile=cafile)
-
+                        capath=capath, cafile=cafile, timeout=timeout, \
+                        max_retry=max_retry)

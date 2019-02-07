@@ -6,7 +6,7 @@ python-redfish-library
 .. image:: https://img.shields.io/pypi/v/redfish.svg?maxAge=2592000
 	:target: https://pypi.python.org/pypi/redfish
 .. image:: https://img.shields.io/github/release/DMTF/python-redfish-library.svg?maxAge=2592000
-	:target: 
+	:target:
 .. image:: https://img.shields.io/badge/License-BSD%203--Clause-blue.svg
 	:target: https://raw.githubusercontent.com/DMTF/python-redfish-library/master/LICENSE
 .. image:: https://img.shields.io/pypi/pyversions/redfish.svg?maxAge=2592000
@@ -58,7 +58,7 @@ Import the relevant python module
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
  For a Redfish compliant application import the relevant python module.
- 
+
  For Redfish compliant application:
 
 .. code-block:: python
@@ -70,6 +70,7 @@ Create a Redfish Object
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
  The Redfish Objects contain 3 parameters: the target secured URL (i.e. "https://IP" or "https://X.Y.Z.T"), an user name and its password.
+ There are additional 2 optional parameters: timeout (in seconds before a connection initialization times out) and max_retry (how many times a request will retry after a timeout). If unset these default to None and 10 respectively.
  To crete a Redfish Object, call the redfish_client method:
 .. code-block:: python
 
@@ -117,7 +118,7 @@ Logout the created session
 
 	REDFISH_OBJ.logout()
 
- A logout deletes the current sesssion from the system. The redfish_client object destructor includes a logout statement. 
+ A logout deletes the current sesssion from the system. The redfish_client object destructor includes a logout statement.
 
 
 Contributing

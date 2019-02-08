@@ -1,13 +1,11 @@
-###
 # Copyright Notice:
-# Copyright 2016 DMTF. All rights reserved.
+# Copyright 2016-2019 DMTF. All rights reserved.
 # License: BSD 3-Clause License. For full text see link: https://github.com/DMTF/python-redfish-library/blob/master/LICENSE.md
-###
 
 """ Redfish restful library """
 
 __all__ = ['rest', 'ris', 'discovery']
-__version__ = "2.0.6"
+__version__ = "2.0.7"
 
 from redfish.rest.v1 import redfish_client
 from redfish.rest.v1 import AuthMethod

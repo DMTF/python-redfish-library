@@ -268,6 +268,30 @@ class RestResponse(object):
         return self._session_location
 
     @property
+    def is_processing(self):
+        """Check if we're a PATCH/POST in progress """
+        return self.status == 202
+
+    def process_resource(self, context):
+        """Function to process Task, used on a resource that returns 202"""
+        my_href = self.getheader('location')
+        if self.is_processing:
+            if my_href:
+                my_content = context.get(my_href, None)
+                if my_content.is_processing:
+                    return None
+                else:
+                    return my_content
+            elif my_href is None:
+                raise ValueError('We are processing a 202, but provide no location')
+        elif self.status == 201:
+            if my_href is None:
+                raise ValueError('We are processing a 201, but provide no location')
+            return context.get(my_href, None)
+        # let the user handle odd codes
+        return self
+
+    @property
     def request(self):
         """Property for accessing the saved http request"""
         return self._rest_request

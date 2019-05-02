@@ -272,23 +272,18 @@ class RestResponse(object):
         """Check if we're a PATCH/POST in progress """
         return self.status == 202
 
-    def process_resource(self, context):
+    def process_task(self, context):
         """Function to process Task, used on an action or POST/PATCH that returns 202"""
         my_href = self.getheader('location')
         if self.is_processing:
             if my_href:
                 my_content = context.get(my_href, None)
                 if my_content.is_processing:
-                    return None
+                    return self
                 else:
                     return my_content
             elif my_href is None:
                 raise ValueError('We are processing a 202, but provide no location')
-        elif self.status in [200, 201, 204]:
-            if my_href is None:
-                raise ValueError('We are processing a {}, but provide no location'.format(self.status))
-            return context.get(my_href, None)
-        # let the user handle odd codes
         return self
 
     @property

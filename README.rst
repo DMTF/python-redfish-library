@@ -109,6 +109,26 @@ Perform a POST operation
 	body = {"ResetType": "GracefulShutdown"}
 	response = REDFISH_OBJ.post("/redfish/v1/systems/1/Actions/ComputerSystem.Reset", body=body)
 
+Working with Tasks
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+ A POST operation may result in a task, describing an operation with a duration greater than the span of a single request
+ The action message object that is_processing will return a Task resource that can be accessed reviewed when polled with monitor
+ An example of a POST operation with a possible Task is shown below
+
+.. code-block:: python
+
+	body = {"ResetType": "GracefulShutdown"}
+	response = REDFISH_OBJ.post("/redfish/v1/systems/1/Actions/ComputerSystem.Reset", body=body)
+    if(response.is_processing):
+        task = response.monitor(context)
+
+        while(task.is_processing):
+            retry_time = task.retry_after
+            task_status = task.dict['TaskState']
+            time.sleep(retry_time if retry_time else 5)
+            task = response.monitor(context)
+
 Logout the created session
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 

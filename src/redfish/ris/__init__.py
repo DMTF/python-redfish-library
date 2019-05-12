@@ -7,9 +7,7 @@
 RIS implementation
 """
 
-from .sharedtypes import (
-    JSONEncoder
-)
+from .sharedtypes import JSONEncoder
 
 from .ris import (
     RisMonolithMemberBase,
@@ -32,6 +30,4 @@ from .rmc_helper import (
     RmcFileCacheManager,
 )
 
-from .rmc import (
-    RmcApp
-)
+from .rmc import RmcApp

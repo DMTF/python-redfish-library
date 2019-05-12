@@ -7,4 +7,4 @@ import redfish
 # Invoke the discovery routine for SSDP and print the responses
 services = redfish.discover_ssdp()
 for service in services:
-    print( '{}: {}'.format(service, services[service]))
+    print("{}: {}".format(service, services[service]))

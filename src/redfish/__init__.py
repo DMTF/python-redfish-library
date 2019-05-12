@@ -1,16 +1,15 @@
 # Copyright Notice:
 # Copyright 2016-2019 DMTF. All rights reserved.
-# License: BSD 3-Clause License. For full text see link: https://github.com/DMTF/python-redfish-library/blob/master/LICENSE.md
+# License: BSD 3-Clause License. For full text see link:
+# https://github.com/DMTF/python-redfish-library/blob/master/LICENSE.md
 
-""" Redfish restful library """
+"""Redfish restful library."""
 
-__all__ = ['rest', 'ris', 'discovery']
+__all__ = ["rest", "ris", "discovery"]
 __version__ = "2.0.7"
 
-from redfish.rest.v1 import redfish_client
-from redfish.rest.v1 import AuthMethod
-from redfish.discovery.discovery import discover_ssdp
 import logging
+
 
 def redfish_logger(file_name, log_format, log_level=logging.ERROR):
     formatter = logging.Formatter(log_format)

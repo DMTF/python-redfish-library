@@ -5,45 +5,53 @@
 # -*- coding: utf-8 -*-
 """RMC implementation """
 
-#---------Imports---------
+# ---------Imports---------
+from collections import Mapping
+from collections import OrderedDict
+import copy
+import logging
 import os
 import re
-import sys
-import six
-import time
-import copy
 import shutil
-import logging
-from collections import OrderedDict, Mapping
+import sys
+import time
 
 import jsonpatch
 import jsonpath_rw
 import jsonpointer
-                     
-from redfish.ris.rmc_helper import (UndefinedClientError, \
-                            InstanceNotFoundError, CurrentlyLoggedInError, \
-                            NothingSelectedError, InvalidSelectionError, \
-                            RmcClient, RmcConfig, RmcFileCacheManager, \
-                            NothingSelectedSetError, LoadSkipSettingError, \
-                            InvalidCommandLineError, FailureDuringCommitError, \
-                            SessionExpired)
+from redfish.ris.rmc_helper import CurrentlyLoggedInError
+from redfish.ris.rmc_helper import FailureDuringCommitError
+from redfish.ris.rmc_helper import InstanceNotFoundError
+from redfish.ris.rmc_helper import InvalidCommandLineError
+from redfish.ris.rmc_helper import InvalidSelectionError
+from redfish.ris.rmc_helper import LoadSkipSettingError
+from redfish.ris.rmc_helper import NothingSelectedError
+from redfish.ris.rmc_helper import NothingSelectedSetError
+from redfish.ris.rmc_helper import RmcClient
+from redfish.ris.rmc_helper import RmcConfig
+from redfish.ris.rmc_helper import RmcFileCacheManager
+from redfish.ris.rmc_helper import SessionExpired
+from redfish.ris.rmc_helper import UndefinedClientError
+import six
 
-#---------End of imports---------
+# ---------End of imports---------
 
-#---------Debug logger---------
+# ---------Debug logger---------
 
 LOGGER = logging.getLogger(__name__)
 
-#---------End of debug logger---------
+# ---------End of debug logger---------
+
 
 class RmcApp(object):
     """Application level implementation of RMC"""
+
     def __init__(self, Args=None):
         """Initialize RmcApp
-        
+
         :param Args: arguments to be passed to RmcApp
         :type Args: str
-        
+
         """
         self._rmc_clients = []
         configfile = None
@@ -65,11 +73,12 @@ class RmcApp(object):
 
         # use the default config file
         if configfile is None:
-            if os.name == 'nt':
-                configfile = os.path.join(os.path.dirname(sys.executable), \
-                                                                 'redfish.conf')
+            if os.name == "nt":
+                configfile = os.path.join(
+                    os.path.dirname(sys.executable), "redfish.conf"
+                )
             else:
-                configfile = '/etc/redfish/redfish.conf'
+                configfile = "/etc/redfish/redfish.conf"
 
         if not os.path.isfile(configfile):
             self.warn("Config file '%s' not found\n\n" % configfile)
@@ -81,7 +90,7 @@ class RmcApp(object):
 
         if not "--showwarnings" in Args:
             self.logger.setLevel(logging.WARNING)
-            if self.logger.handlers and self.logger.handlers[0].name == 'lerr':
+            if self.logger.handlers and self.logger.handlers[0].name == "lerr":
                 self.logger.handlers.remove(self.logger.handlers[0])
 
     def restore(self):
@@ -103,8 +112,9 @@ class RmcApp(object):
 
     def out(self):
         """Helper function for runtime error"""
-        raise RuntimeError("You must override this method in your derived" \
-                                                                    " class")
+        raise RuntimeError(
+            "You must override this method in your derived" " class"
+        )
 
     def err(self, msg, inner_except=None):
         """Helper function for runtime error
@@ -114,7 +124,7 @@ class RmcApp(object):
         :param inner_except: The internal exception.
         :type inner_except: str.
 
-        """
+        """  # noqa: B901
         LOGGER.error(msg)
         if inner_except is not None:
             LOGGER.error(inner_except)
@@ -139,7 +149,7 @@ class RmcApp(object):
         :param inner_except: The internal exception.
         :type inner_except: str.
 
-        """
+        """  # noqa: B901
         LOGGER.warning(msg)
         if inner_except is not None:
             LOGGER.warning(inner_except)
@@ -234,11 +244,11 @@ class RmcApp(object):
         """
         for i in range(0, len(self._rmc_clients)):
             if url == self._rmc_clients[i].get_base_url():
-                if 'username' in kwargs:
-                    self._rmc_clients[i].set_username(kwargs['username'])
+                if "username" in kwargs:
+                    self._rmc_clients[i].set_username(kwargs["username"])
 
-                if 'password' in kwargs:
-                    self._rmc_clients[i].set_password(kwargs['password'])
+                if "password" in kwargs:
+                    self._rmc_clients[i].set_password(kwargs["password"])
 
     def get_current_client(self):
         """Get the current client"""
@@ -249,8 +259,16 @@ class RmcApp(object):
 
     current_client = property(get_current_client, None)
 
-    def login(self, username=None, password=None, base_url=None, verbose=False,\
-                                path=None, skipbuild=False, includelogs=False):
+    def login(
+        self,
+        username=None,
+        password=None,
+        base_url=None,
+        verbose=False,
+        path=None,
+        skipbuild=False,
+        includelogs=False,
+    ):
         """Main worker function for login command
 
         :param username: user name required to login to server.
@@ -270,18 +288,24 @@ class RmcApp(object):
 
         """
         if not self.check_current_rmc_client(url=base_url):
-            raise CurrentlyLoggedInError("Currently logged into another " \
-                                         "server. \nPlease log out out first " \
-                                         "before logging in to another.")
+            raise CurrentlyLoggedInError(
+                "Currently logged into another "
+                "server. \nPlease log out out first "
+                "before logging in to another."
+            )
 
         existing_client = self.get_rmc_client(url=base_url)
         if existing_client:
-            self.update_rmc_client(url=base_url, username=username,
-                                                            password=password)
+            self.update_rmc_client(
+                url=base_url, username=username, password=password
+            )
         else:
             try:
-                self.add_rmc_client(RmcClient(username=username, \
-                                              password=password, url=base_url))
+                self.add_rmc_client(
+                    RmcClient(
+                        username=username, password=password, url=base_url
+                    )
+                )
             except Exception as excp:
                 raise excp
 
@@ -291,8 +315,9 @@ class RmcApp(object):
             raise excp
 
         if not skipbuild:
-            self.build_monolith(verbose=verbose, path=path, \
-                                                        includelogs=includelogs)
+            self.build_monolith(
+                verbose=verbose, path=path, includelogs=includelogs
+            )
             self.save()
 
     def build_monolith(self, verbose=False, path=None, includelogs=False):
@@ -312,8 +337,9 @@ class RmcApp(object):
         endtime = time.clock()
 
         if verbose:
-            sys.stdout.write("Monolith build process time: %s\n" % \
-                                                        (endtime - inittime))
+            sys.stdout.write(
+                "Monolith build process time: %s\n" % (endtime - inittime)
+            )
 
     def logout(self, url=None):
         """Main function for logout command
@@ -337,9 +363,14 @@ class RmcApp(object):
 
         for session in sessionlocs:
             try:
-                self.delete_handler(session[0], url=session[1], \
-                            sessionid=session[2], silent=True, service=True)
-            except:
+                self.delete_handler(
+                    session[0],
+                    url=session[1],
+                    sessionid=session[2],
+                    silent=True,
+                    service=True,
+                )
+            except Exception:
                 pass
         self.remove_rmc_client(url)
         self.save()
@@ -373,13 +404,15 @@ class RmcApp(object):
                 currdict = jsonpatch.apply_patch(currdict, patch)
 
             if selector:
-                jsonpath_expr = jsonpath_rw.parse('%s' % selector)
+                jsonpath_expr = jsonpath_rw.parse("%s" % selector)
                 matches = jsonpath_expr.find(currdict)
                 temp_dict = OrderedDict()
 
                 for match in matches:
-                    json_pstr = '/%s' % match.full_path
-                    json_node = jsonpointer.resolve_pointer(currdict, json_pstr)
+                    json_pstr = "/%s" % match.full_path
+                    json_node = jsonpointer.resolve_pointer(
+                        currdict, json_pstr
+                    )
                     temp_dict[str(match.full_path)] = json_node
                     results.append(temp_dict)
             else:
@@ -387,8 +420,13 @@ class RmcApp(object):
 
         return results
 
-    def get_save(self, selector=None, currentoverride=False, pluspath=False, \
-                                                                onlypath=None):
+    def get_save(
+        self,
+        selector=None,
+        currentoverride=False,
+        pluspath=False,
+        onlypath=None,
+    ):
         """Special main function for get in save command
 
         :param selector: the type selection for the get operation.
@@ -409,8 +447,10 @@ class RmcApp(object):
             raise NothingSelectedError()
 
         for instance in instances:
-            if self.get_save_helper(instance.resp.request.path, instances)\
-                                                     and not currentoverride:
+            if (
+                self.get_save_helper(instance.resp.request.path, instances)
+                and not currentoverride
+            ):
                 continue
             elif onlypath:
                 if not onlypath == instance.resp.request.path:
@@ -437,8 +477,10 @@ class RmcApp(object):
                 temp_dict = OrderedDict()
 
                 for match in matches:
-                    json_pstr = '/%s' % match.full_path
-                    json_node = jsonpointer.resolve_pointer(currdict, json_pstr)
+                    json_pstr = "/%s" % match.full_path
+                    json_node = jsonpointer.resolve_pointer(
+                        currdict, json_pstr
+                    )
                     temp_dict[str(match.full_path)] = json_node
 
                 results.append(temp_dict)
@@ -463,11 +505,14 @@ class RmcApp(object):
         skip = False
 
         for item in instances:
-            if (path + "/settings").lower() == (item.resp.request.path).lower():
+            if (path + "/settings").lower() == (
+                item.resp.request.path
+            ).lower():
                 skip = True
                 break
-            elif (path + "settings/").lower() == \
-                                            (item.resp.request.path).lower():
+            elif (path + "settings/").lower() == (
+                item.resp.request.path
+            ).lower():
                 skip = True
                 break
 
@@ -505,31 +550,38 @@ class RmcApp(object):
                         break
 
                 newdict = currdict.copy()
-                jsonpath_expr = jsonpath_rw.parse(u'%s' % selector)
+                jsonpath_expr = jsonpath_rw.parse(u"%s" % selector)
                 matches = jsonpath_expr.find(currdict)
 
                 if not matches:
-                    self.warning_handler("Property not found in selection " \
-                         "'%s', skipping '%s'\n" % (instance.type, selector))
+                    self.warning_handler(
+                        "Property not found in selection "
+                        "'%s', skipping '%s'\n" % (instance.type, selector)
+                    )
                     nochangesmade = False
 
                 for match in matches:
                     listfound = False
                     newdict = currdict.copy()
-                    json_pstr = u'/%s' % match.full_path
+                    json_pstr = u"/%s" % match.full_path
 
                     if val:
                         if str(val)[0] == "[" and str(val)[-1] == "]":
-                            json_node = jsonpointer.set_pointer(newdict, \
-                                json_pstr, '"' + str(val) + '"', inplace=True)
+                            json_node = jsonpointer.set_pointer(
+                                newdict,
+                                json_pstr,
+                                '"' + str(val) + '"',
+                                inplace=True,
+                            )
                         else:
                             listfound = True
                     else:
                         listfound = True
 
                     if listfound:
-                        json_node = jsonpointer.set_pointer(newdict, \
-                                                json_pstr, val, inplace=True)
+                        json_node = jsonpointer.set_pointer(
+                            newdict, json_pstr, val, inplace=True
+                        )
 
                     json_node = jsonpointer.resolve_pointer(newdict, json_pstr)
                     patch = jsonpatch.make_patch(currdict, newdict)
@@ -543,23 +595,27 @@ class RmcApp(object):
                                 if item[0]["path"] == patch.patch[0]["path"]:
                                     instance.patches.remove(item)
                             except Exception:
-                                if item.patch[0]["path"] == \
-                                                        patch.patch[0]["path"]:
+                                if (
+                                    item.patch[0]["path"]
+                                    == patch.patch[0]["path"]
+                                ):
                                     instance.patches.remove(item)
 
                         instance.patches.append(patch)
-                        results.append({selector:json_node})
+                        results.append({selector: json_node})
 
                     if not patch:
                         for item in instance.patches:
                             try:
-                                entry = item.patch[0]["path"].replace('/', '')
+                                entry = item.patch[0]["path"].replace("/", "")
                                 value = item.patch[0]["value"]
                             except Exception:
-                                entry = item[0]["path"].replace('/', '')
+                                entry = item[0]["path"].replace("/", "")
                                 value = item[0]["value"]
 
-                            if entry == selector and str(value) not in str(val):
+                            if entry == selector and str(value) not in str(
+                                val
+                            ):
                                 if currdict[selector] == val:
                                     instance.patches.remove(item)
                                     patchremoved = True
@@ -577,20 +633,27 @@ class RmcApp(object):
         try:
             headervals = instance.resp._http_response.headers.keys()
             if headervals is not None and len(headervals):
-                allow = list(filter(lambda x:x.lower()=="allow", headervals))
+                allow = list(
+                    filter(lambda x: x.lower() == "allow", headervals)
+                )
                 if len(allow):
-                    if not "PATCH" in instance.resp._http_response.headers\
-                                                        [allow[0]]:
+                    if (
+                        not "PATCH"
+                        in instance.resp._http_response.headers[allow[0]]
+                    ):
                         skip = True
                 return skip
         except:
             pass
         try:
-            if not any("PATCH" in x for x in instance.resp._http_response.msg.\
-                                                                    headers):
+            if not any(
+                "PATCH" in x for x in instance.resp._http_response.msg.headers
+            ):
                 if verbose:
-                    self.warning_handler('Skipping read-only path: %s\n' % \
-                                                    instance.resp.request.path)
+                    self.warning_handler(
+                        "Skipping read-only path: %s\n"
+                        % instance.resp.request.path
+                    )
                 skip = True
         except:
             try:
@@ -598,22 +661,30 @@ class RmcApp(object):
                     if list(item.keys())[0] == "allow":
                         if not "PATCH" in list(item.values())[0]:
                             if verbose:
-                                self.warning_handler('Skipping read-only ' \
-                                     'path: %s' % instance.resp.request.path)
+                                self.warning_handler(
+                                    "Skipping read-only "
+                                    "path: %s" % instance.resp.request.path
+                                )
 
                             skip = True
                             break
             except:
-                if not ("allow" in instance.resp._headers and "PATCH" in \
-                                            instance.resp._headers["allow"]):
+                if not (
+                    "allow" in instance.resp._headers
+                    and "PATCH" in instance.resp._headers["allow"]
+                ):
                     if verbose:
-                        self.warning_handler('Skipping read-only path: ' \
-                                            '%s\n' % instance.resp.request.path)
+                        self.warning_handler(
+                            "Skipping read-only path: "
+                            "%s\n" % instance.resp.request.path
+                        )
                     skip = True
                 elif not "allow" in instance.resp._headers:
                     if verbose:
-                        self.warning_handler('Skipping read-only path: %s\n' \
-                                                % instance.resp.request.path)
+                        self.warning_handler(
+                            "Skipping read-only path: %s\n"
+                            % instance.resp.request.path
+                        )
                     skip = True
 
         return skip
@@ -649,8 +720,8 @@ class RmcApp(object):
 
         newarg = None
         if newargs:
-            (name, value) = newargs[-1].split('=')
-            outputline = '/'.join(newargs[:-1]) + "/" + name
+            (name, value) = newargs[-1].split("=")
+            outputline = "/".join(newargs[:-1]) + "/" + name
             newarg = newargs[:-1]
             newarg.append(name)
             dicttolist = [(name, value)]
@@ -665,7 +736,7 @@ class RmcApp(object):
             currdictcopy = copy.deepcopy(currdict)
             templist = []
 
-            if newargs and len(dicttolist)==1 :
+            if newargs and len(dicttolist) == 1:
                 for i in range(len(newargs)):
                     for item in six.iterkeys(currdictcopy):
                         if newarg[i].lower() == item.lower():
@@ -686,20 +757,25 @@ class RmcApp(object):
                     for ind, item in enumerate(dicttolist):
                         try:
                             if not isinstance(item[1], list):
-                                dicttolist[ind] = items[itemslower.index(\
-                                                    item[0].lower())], item[1]
+                                dicttolist[ind] = (
+                                    items[itemslower.index(item[0].lower())],
+                                    item[1],
+                                )
                             else:
                                 templist.append(item[0])
                         except ValueError as excp:
-                            self.warning_handler("Skipping property {0}, not " \
-                                 "found in current server.\n".format(item[0]))
+                            self.warning_handler(
+                                "Skipping property {0}, not "
+                                "found in current server.\n".format(item[0])
+                            )
 
                             templist.append(item[0])
                             settingskipped = True
 
                     if templist:
-                        dicttolist = [x for x in dicttolist if x not in \
-                                                                    templist]
+                        dicttolist = [
+                            x for x in dicttolist if x not in templist
+                        ]
                 except Exception as excp:
                     raise excp
 
@@ -709,41 +785,49 @@ class RmcApp(object):
             newdict = copy.deepcopy(currdict)
             patch = None
 
-            if newargs and len(dicttolist)==1 :
+            if newargs and len(dicttolist) == 1:
                 matches = self.setmultiworker(newargs, dicttolist, newdict)
 
                 if not matches:
-                    self.warning_handler("Property not found in selection " \
-                         "'%s', skipping '%s'\n" % (instance.type, outputline))
+                    self.warning_handler(
+                        "Property not found in selection "
+                        "'%s', skipping '%s'\n" % (instance.type, outputline)
+                    )
 
                 dicttolist = []
 
             for (itersel, iterval) in dicttolist:
-                jsonpath_expr = jsonpath_rw.parse('%s' % itersel)
+                jsonpath_expr = jsonpath_rw.parse("%s" % itersel)
                 matches = jsonpath_expr.find(currdict)
 
                 if not matches:
-                    self.warning_handler("Property not found in selection " \
-                             "'%s', skipping '%s'\n" % (instance.type, itersel))
+                    self.warning_handler(
+                        "Property not found in selection "
+                        "'%s', skipping '%s'\n" % (instance.type, itersel)
+                    )
                     nochangesmade = False
 
                 for match in matches:
                     listfound = False
-                    json_pstr = '/%s' % match.full_path
+                    json_pstr = "/%s" % match.full_path
 
                     if iterval:
                         if str(iterval)[0] == "[" and str(iterval)[-1] == "]":
-                            json_node = jsonpointer.set_pointer(newdict, \
-                                            json_pstr, '"' + str(iterval) + \
-                                            '"', inplace=True)
+                            json_node = jsonpointer.set_pointer(
+                                newdict,
+                                json_pstr,
+                                '"' + str(iterval) + '"',
+                                inplace=True,
+                            )
                         else:
                             listfound = True
                     else:
                         listfound = True
 
                     if listfound:
-                        json_node = jsonpointer.set_pointer(newdict, \
-                                            json_pstr, iterval, inplace=True)
+                        json_node = jsonpointer.set_pointer(
+                            newdict, json_pstr, iterval, inplace=True
+                        )
 
                     json_node = jsonpointer.resolve_pointer(newdict, json_pstr)
 
@@ -755,12 +839,14 @@ class RmcApp(object):
                                 if item[0]["path"] == patch.patch[0]["path"]:
                                     instance.patches.remove(item)
                             except Exception:
-                                if item.patch[0]["path"] == \
-                                                        patch.patch[0]["path"]:
+                                if (
+                                    item.patch[0]["path"]
+                                    == patch.patch[0]["path"]
+                                ):
                                     instance.patches.remove(item)
 
                         instance.patches.append(patch)
-                        results.append({itersel:json_node})
+                        results.append({itersel: json_node})
 
                     currdict = newdict.copy()
 
@@ -773,25 +859,24 @@ class RmcApp(object):
                             if item[0]["path"] == patch.patch[0]["path"]:
                                 instance.patches.remove(item)
                         except Exception:
-                            if item.patch[0]["path"] == \
-                                                    patch.patch[0]["path"]:
+                            if item.patch[0]["path"] == patch.patch[0]["path"]:
                                 instance.patches.remove(item)
 
                     instance.patches.append(patch)
-                    results.append({outputline:val})
+                    results.append({outputline: val})
                 if not patch:
                     for item in instance.patches:
                         try:
-                            entry = item.patch[0]["path"].split('/')[1:]
+                            entry = item.patch[0]["path"].split("/")[1:]
                         except Exception:
-                            entry = item[0]["path"].split('/')[1:]
- 
+                            entry = item[0]["path"].split("/")[1:]
+
                         if len(entry) == len(newarg):
                             check = 0
                             for ind, elem in enumerate(entry):
                                 if elem == newarg[ind]:
                                     check += 1
- 
+
                             if check == len(newarg):
                                 instance.patches.remove(item)
                                 patchremoved = True
@@ -821,8 +906,8 @@ class RmcApp(object):
         nochangesmade = False
         patchremoved = False
 
-        (name, _) = newargs[-1].split('=', 1)
-        outputline = '/'.join(newargs[:-1]) + "/" + name
+        (name, _) = newargs[-1].split("=", 1)
+        outputline = "/".join(newargs[:-1]) + "/" + name
 
         instances = self.get_selection()
         if not instances or len(instances) == 0:
@@ -859,8 +944,10 @@ class RmcApp(object):
                 matches = self.setmultiworker(newargs, self._multilevelbuffer)
 
                 if not matches:
-                    self.warning_handler("Property not found in selection " \
-                         "'%s', skipping '%s'\n" % (instance.type, outputline))
+                    self.warning_handler(
+                        "Property not found in selection "
+                        "'%s', skipping '%s'\n" % (instance.type, outputline)
+                    )
                 else:
                     patch = jsonpatch.make_patch(currdict, newdict)
 
@@ -873,19 +960,21 @@ class RmcApp(object):
                                 if item[0]["path"] == patch.patch[0]["path"]:
                                     instance.patches.remove(item)
                             except Exception:
-                                if item.patch[0]["path"] == \
-                                                        patch.patch[0]["path"]:
+                                if (
+                                    item.patch[0]["path"]
+                                    == patch.patch[0]["path"]
+                                ):
                                     instance.patches.remove(item)
 
                         instance.patches.append(patch)
-                        results.append({outputline:val})
+                        results.append({outputline: val})
 
                     if not patch:
                         for item in instance.patches:
                             try:
-                                entry = item.patch[0]["path"].split('/')[1:]
+                                entry = item.patch[0]["path"].split("/")[1:]
                             except Exception:
-                                entry = item[0]["path"].split('/')[1:]
+                                entry = item[0]["path"].split("/")[1:]
 
                             if len(entry) == len(newarg):
                                 check = 0
@@ -936,15 +1025,14 @@ class RmcApp(object):
 
         return found
 
-
     def status(self):
         """Main function for status command"""
         finalresults = list()
         monolith = self.current_client.monolith
 
         for ristype in monolith.types:
-            if 'Instances' in monolith.types[ristype]:
-                for instance in monolith.types[ristype]['Instances']:
+            if "Instances" in monolith.types[ristype]:
+                for instance in monolith.types[ristype]["Instances"]:
                     results = list()
 
                     if instance.patches and len(instance.patches) > 0:
@@ -1006,27 +1094,31 @@ class RmcApp(object):
 
                 if boolfound or intfound:
                     try:
-                        results = {item:patch.patch[0]["value"]}
+                        results = {item: patch.patch[0]["value"]}
                     except Exception:
-                        results = {item:patch[0]["value"]}
+                        results = {item: patch[0]["value"]}
 
                 else:
                     try:
-                        if patch.patch[0]["value"][0] == '"' and\
-                                            patch.patch[0]["value"][-1] == '"':
-                            results = {item:patch.patch[0]["value"][1:-1]}
+                        if (
+                            patch.patch[0]["value"][0] == '"'
+                            and patch.patch[0]["value"][-1] == '"'
+                        ):
+                            results = {item: patch.patch[0]["value"][1:-1]}
                         else:
-                            results = {item:patch.patch[0]["value"]}
+                            results = {item: patch.patch[0]["value"]}
                     except Exception:
-                        if patch[0]["value"][0] == '"' and\
-                                                patch[0]["value"][-1] == '"':
-                            results = {item:patch[0]["value"][1:-1]}
+                        if (
+                            patch[0]["value"][0] == '"'
+                            and patch[0]["value"][-1] == '"'
+                        ):
+                            results = {item: patch[0]["value"][1:-1]}
                         else:
-                            results = {item:patch[0]["value"]}
+                            results = {item: patch[0]["value"]}
 
                 counter += 1
             else:
-                results = {item:results}
+                results = {item: results}
 
         return results
 
@@ -1054,7 +1146,7 @@ class RmcApp(object):
 
             # apply patches to represent current edits
             for patch in instance.patches:
-                if hasattr(patch, 'patch'):
+                if hasattr(patch, "patch"):
                     if len(patch.patch):
                         if "/" in patch.patch[0]["path"][1:]:
                             newdict = self.commitworkerfunc(patch)
@@ -1063,31 +1155,42 @@ class RmcApp(object):
                                 self.merge_dict(currdict, newdict)
                         else:
                             if isinstance(patch.patch[0]["value"], int):
-                                currdict[patch.patch[0]["path"][1:]] = \
-                                                        patch.patch[0]["value"]
+                                currdict[
+                                    patch.patch[0]["path"][1:]
+                                ] = patch.patch[0]["value"]
                             elif not isinstance(patch.patch[0]["value"], bool):
                                 if patch.patch[0]["value"]:
-                                    if patch.patch[0]["value"][0] == '"' and\
-                                        patch.patch[0]["value"][-1] == '"' and\
-                                        len(patch.patch[0]["value"]) == 2:
-                                        currdict[patch.patch[0]["path"][1:]] = \
-                                                                            ''
-                                    elif patch.patch[0]["value"][0] == '"' and\
-                                        patch.patch[0]["value"][-1] == '"':
-                                        line = patch.patch[0]["value"]\
-                                                        [2:-2].replace("'", "")
+                                    if (
+                                        patch.patch[0]["value"][0] == '"'
+                                        and patch.patch[0]["value"][-1] == '"'
+                                        and len(patch.patch[0]["value"]) == 2
+                                    ):
+                                        currdict[
+                                            patch.patch[0]["path"][1:]
+                                        ] = ""
+                                    elif (
+                                        patch.patch[0]["value"][0] == '"'
+                                        and patch.patch[0]["value"][-1] == '"'
+                                    ):
+                                        line = patch.patch[0]["value"][
+                                            2:-2
+                                        ].replace("'", "")
                                         line = line.replace(", ", ",")
-                                        currdict[patch.patch[0]["path"]\
-                                                        [1:]] = line.split(',')
+                                        currdict[
+                                            patch.patch[0]["path"][1:]
+                                        ] = line.split(",")
                                     else:
-                                        currdict[patch.patch[0]["path"][1:]] = \
-                                                        patch.patch[0]["value"]
+                                        currdict[
+                                            patch.patch[0]["path"][1:]
+                                        ] = patch.patch[0]["value"]
                                 else:
-                                    currdict[patch.patch[0]["path"][1:]] = \
-                                                        patch.patch[0]["value"]
+                                    currdict[
+                                        patch.patch[0]["path"][1:]
+                                    ] = patch.patch[0]["value"]
                             else:
-                                currdict[patch.patch[0]["path"][1:]] = \
-                                                    patch.patch[0]["value"]
+                                currdict[
+                                    patch.patch[0]["path"][1:]
+                                ] = patch.patch[0]["value"]
                 else:
                     if "/" in patch[0]["path"][1:]:
                         newdict = self.commitworkerfunc(patch)
@@ -1098,28 +1201,37 @@ class RmcApp(object):
                             currdict[patch[0]["path"][1:]] = patch[0]["value"]
                         elif not isinstance(patch[0]["value"], bool):
                             if patch[0]["value"]:
-                                if patch[0]["value"][0] == '"' and\
-                                            patch[0]["value"][-1] == '"' and \
-                                                    len(patch[0]["value"]) == 2:
-                                    currdict[patch[0]["path"][1:]] = ''
-                                elif patch[0]["value"][0] == '"' and\
-                                                patch[0]["value"][-1] == '"':
-                                    currdict[patch[0]["path"][1:]] = \
-                                            patch[0]["value"][2:-2].split(',')
+                                if (
+                                    patch[0]["value"][0] == '"'
+                                    and patch[0]["value"][-1] == '"'
+                                    and len(patch[0]["value"]) == 2
+                                ):
+                                    currdict[patch[0]["path"][1:]] = ""
+                                elif (
+                                    patch[0]["value"][0] == '"'
+                                    and patch[0]["value"][-1] == '"'
+                                ):
+                                    currdict[patch[0]["path"][1:]] = patch[0][
+                                        "value"
+                                    ][2:-2].split(",")
                                 else:
-                                    currdict[patch[0]["path"][1:]] = \
-                                                            patch[0]["value"]
+                                    currdict[patch[0]["path"][1:]] = patch[0][
+                                        "value"
+                                    ]
                             else:
-                                currdict[patch[0]["path"][1:]] = \
-                                                            patch[0]["value"]
+                                currdict[patch[0]["path"][1:]] = patch[0][
+                                    "value"
+                                ]
                         else:
                             currdict[patch[0]["path"][1:]] = patch[0]["value"]
 
             if currdict:
                 changesmade = True
                 if verbose:
-                    out.write('Changes made to path: %s\n' % \
-                                                    instance.resp.request.path)
+                    out.write(
+                        "Changes made to path: %s\n"
+                        % instance.resp.request.path
+                    )
 
                 put_path = instance.resp.request.path
                 results = self.current_client.set(put_path, body=currdict)
@@ -1127,8 +1239,10 @@ class RmcApp(object):
                 self.invalid_return_handler(results)
 
                 if not results.status == 200:
-                    raise FailureDuringCommitError("Failed to commit with " \
-                                               "error code %d" % results.status)
+                    raise FailureDuringCommitError(
+                        "Failed to commit with "
+                        "error code %d" % results.status
+                    )
 
         return changesmade
 
@@ -1144,14 +1258,22 @@ class RmcApp(object):
         for k, itemv2 in list(newdict.items()):
             itemv1 = currdict.get(k)
 
-            if isinstance(itemv1, Mapping) and\
-                 isinstance(itemv2, Mapping):
+            if isinstance(itemv1, Mapping) and isinstance(itemv2, Mapping):
                 self.merge_dict(itemv1, itemv2)
             else:
                 currdict[k] = itemv2
 
-    def patch_handler(self, put_path, body, verbose=False, url=None, \
-                  sessionid=None, headers=None, response=False, silent=False):
+    def patch_handler(
+        self,
+        put_path,
+        body,
+        verbose=False,
+        url=None,
+        sessionid=None,
+        headers=None,
+        response=False,
+        silent=False,
+    ):
         """Main worker function for raw patch command
 
         :param put_path: the URL path.
@@ -1172,11 +1294,13 @@ class RmcApp(object):
 
         """
         if sessionid:
-            results = RmcClient(url=url, sessionkey=sessionid).set(put_path, \
-                                                    body=body, headers=headers)
+            results = RmcClient(url=url, sessionkey=sessionid).set(
+                put_path, body=body, headers=headers
+            )
         else:
-            results = self.current_client.set(put_path, body=body, \
-                                                                headers=headers)
+            results = self.current_client.set(
+                put_path, body=body, headers=headers
+            )
 
         if not silent:
             self.invalid_return_handler(results, verbose=verbose)
@@ -1186,8 +1310,17 @@ class RmcApp(object):
         if response:
             return results
 
-    def get_handler(self, put_path, silent=False, verbose=False, url=None, \
-                sessionid=None, uncache=False, headers=None, response=False):
+    def get_handler(
+        self,
+        put_path,
+        silent=False,
+        verbose=False,
+        url=None,
+        sessionid=None,
+        uncache=False,
+        headers=None,
+        response=False,
+    ):
         """main worker function for raw get command
 
         :param put_path: the URL path.
@@ -1210,11 +1343,13 @@ class RmcApp(object):
 
         """
         if sessionid:
-            results = RmcClient(url=url, sessionkey=sessionid).get(put_path, \
-                                                               headers=headers)
+            results = RmcClient(url=url, sessionkey=sessionid).get(
+                put_path, headers=headers
+            )
         else:
-            results = self.current_client.get(put_path, uncache=uncache, \
-                                                                headers=headers)
+            results = self.current_client.get(
+                put_path, uncache=uncache, headers=headers
+            )
 
         if not silent:
             self.invalid_return_handler(results, verbose=verbose)
@@ -1226,8 +1361,17 @@ class RmcApp(object):
         else:
             return None
 
-    def post_handler(self, put_path, body, verbose=False, url=None, \
-                 sessionid=None, headers=None, response=False, silent=False):
+    def post_handler(
+        self,
+        put_path,
+        body,
+        verbose=False,
+        url=None,
+        sessionid=None,
+        headers=None,
+        response=False,
+        silent=False,
+    ):
         """Main worker function for raw post command
 
         :param put_path: the URL path.
@@ -1248,11 +1392,13 @@ class RmcApp(object):
 
         """
         if sessionid:
-            results = RmcClient(url=url, sessionkey=sessionid).toolpost(\
-                                        put_path, body=body, headers=headers)
+            results = RmcClient(url=url, sessionkey=sessionid).toolpost(
+                put_path, body=body, headers=headers
+            )
         else:
-            results = self.current_client.toolpost(put_path, body=body, \
-                                                                headers=headers)
+            results = self.current_client.toolpost(
+                put_path, body=body, headers=headers
+            )
 
         if not silent:
             self.invalid_return_handler(results, verbose=verbose)
@@ -1262,8 +1408,17 @@ class RmcApp(object):
         if response:
             return results
 
-    def put_handler(self, put_path, body, verbose=False, url=None, \
-                    sessionid=None, headers=None, response=False, silent=False):
+    def put_handler(
+        self,
+        put_path,
+        body,
+        verbose=False,
+        url=None,
+        sessionid=None,
+        headers=None,
+        response=False,
+        silent=False,
+    ):
         """Main worker function for raw put command
 
         :param put_path: the URL path.
@@ -1284,11 +1439,13 @@ class RmcApp(object):
 
         """
         if sessionid:
-            results = RmcClient(url=url, sessionkey=sessionid).toolput(\
-                                           put_path, body=body, headers=headers)
+            results = RmcClient(url=url, sessionkey=sessionid).toolput(
+                put_path, body=body, headers=headers
+            )
         else:
-            results = self.current_client.toolput(put_path, body=body, \
-                                                                headers=headers)
+            results = self.current_client.toolput(
+                put_path, body=body, headers=headers
+            )
 
         if not silent:
             self.invalid_return_handler(results, verbose=verbose)
@@ -1298,8 +1455,15 @@ class RmcApp(object):
         if response:
             return results
 
-    def delete_handler(self, put_path, verbose=False, url=None, \
-                                    sessionid=None, headers=None, silent=True):
+    def delete_handler(
+        self,
+        put_path,
+        verbose=False,
+        url=None,
+        sessionid=None,
+        headers=None,
+        silent=True,
+    ):
         """Main worker function for raw delete command
 
         :param put_path: the URL path.
@@ -1318,8 +1482,9 @@ class RmcApp(object):
 
         """
         if sessionid:
-            results = RmcClient(url=url, sessionkey=sessionid).tooldelete(\
-                                                    put_path, headers=headers)
+            results = RmcClient(url=url, sessionkey=sessionid).tooldelete(
+                put_path, headers=headers
+            )
         else:
             results = self.current_client.tooldelete(put_path, headers=headers)
 
@@ -1330,8 +1495,9 @@ class RmcApp(object):
 
         return results
 
-    def head_handler(self, put_path, verbose=False, url=None, sessionid=None, \
-                                                                silent=False):
+    def head_handler(
+        self, put_path, verbose=False, url=None, sessionid=None, silent=False
+    ):
         """Main worker function for raw head command
 
         :param put_path: the URL path.
@@ -1360,7 +1526,8 @@ class RmcApp(object):
         else:
             return None
 
-    _QUERY_PATTERN = re.compile(r'(?P<instance>[\w\.]+)(:(?P<xpath>.*))?')
+    _QUERY_PATTERN = re.compile(r"(?P<instance>[\w\.]+)(:(?P<xpath>.*))?")
+
     def _parse_query(self, querystr):
         """Parse query and return as a dict. TODO probably need to move"""
         """ this into its own class if it gets too complicated
@@ -1372,13 +1539,15 @@ class RmcApp(object):
         """
         qmatch = RmcApp._QUERY_PATTERN.search(querystr)
         if not qmatch:
-            raise InvalidSelectionError("Unable to locate instance for " \
-                                                            "'%s'" % querystr)
+            raise InvalidSelectionError(
+                "Unable to locate instance for " "'%s'" % querystr
+            )
 
         qgroups = qmatch.groupdict()
 
-        return dict(instance=qgroups['instance'], \
-                                            xpath=qgroups.get('xpath', None))
+        return dict(
+            instance=qgroups["instance"], xpath=qgroups.get("xpath", None)
+        )
 
     def invalid_return_handler(self, results, verbose=False):
         """Main worker function for handling all error messages
@@ -1394,14 +1563,18 @@ class RmcApp(object):
         else:
             if results.status == 200 or results.status == 201:
                 if verbose:
-                    self.warning_handler("[%d] The operation completed " \
-                                            "successfully.\n" % results.status)
+                    self.warning_handler(
+                        "[%d] The operation completed "
+                        "successfully.\n" % results.status
+                    )
                 else:
-                    self.warning_handler("The operation completed "\
-                                                            "successfully.\n")
+                    self.warning_handler(
+                        "The operation completed " "successfully.\n"
+                    )
             else:
-                self.warning_handler("[%d] No message returned.\n" % \
-                                                                results.status)
+                self.warning_handler(
+                    "[%d] No message returned.\n" % results.status
+                )
 
     def select(self, query, sel=None, val=None):
         """Main function for select command
@@ -1418,14 +1591,16 @@ class RmcApp(object):
         if query:
             if isinstance(query, list):
                 if len(query) == 0:
-                    raise InstanceNotFoundError("Unable to locate instance " \
-                                                            "for '%s'" % query)
+                    raise InstanceNotFoundError(
+                        "Unable to locate instance " "for '%s'" % query
+                    )
                 else:
                     query = query[0]
 
             if val:
-                if (str(val)[0] == str(val)[-1]) and \
-                                                str(val).endswith(("'", '"')):
+                if (str(val)[0] == str(val)[-1]) and str(val).endswith(
+                    ("'", '"')
+                ):
                     val = val[1:-1]
 
             selection = self.get_selection(selector=query, sel=sel, val=val)
@@ -1444,11 +1619,14 @@ class RmcApp(object):
                 return selection
 
         if not sel is None and not val is None:
-            raise InstanceNotFoundError("Unable to locate instance for" \
-                                " '%s' and filter '%s=%s'" % (query, sel, val))
+            raise InstanceNotFoundError(
+                "Unable to locate instance for"
+                " '%s' and filter '%s=%s'" % (query, sel, val)
+            )
         else:
-            raise InstanceNotFoundError("Unable to locate instance for" \
-                                                                " '%s'" % query)
+            raise InstanceNotFoundError(
+                "Unable to locate instance for" " '%s'" % query
+            )
 
     def filter(self, query, sel, val):
         """Main function for filter command
@@ -1465,8 +1643,9 @@ class RmcApp(object):
         if query:
             if isinstance(query, list):
                 if len(query) == 0:
-                    raise InstanceNotFoundError("Unable to locate instance " \
-                                                            "for '%s'" % query)
+                    raise InstanceNotFoundError(
+                        "Unable to locate instance " "for '%s'" % query
+                    )
                 else:
                     query = query[0]
 
@@ -1496,14 +1675,16 @@ class RmcApp(object):
         if isinstance(output, list):
             for entry in output:
                 if isinstance(entry, dict):
-                    if '/' in sel:
-                        sellist = sel.split('/')
+                    if "/" in sel:
+                        sellist = sel.split("/")
                         newentry = copy.copy(entry)
 
                         for item in sellist:
                             if item in list(newentry.keys()):
-                                if item == sellist[-1] and str(newentry[item])\
-                                                                        == val:
+                                if (
+                                    item == sellist[-1]
+                                    and str(newentry[item]) == val
+                                ):
                                     newoutput.append(entry)
                                 else:
                                     newentry = newentry[item]
@@ -1525,8 +1706,8 @@ class RmcApp(object):
         monolith = self.current_client.monolith
 
         for ristype in monolith.types:
-            if 'Instances' in monolith.types[ristype]:
-                for instance in monolith.types[ristype][u'Instances']:
+            if "Instances" in monolith.types[ristype]:
+                for instance in monolith.types[ristype][u"Instances"]:
                     instances.append(instance.type)
 
         return instances
@@ -1556,25 +1737,28 @@ class RmcApp(object):
             return instances
 
         xpath = None
-        odata = ''
+        odata = ""
 
         if not selector == '"*"':
             qvars = self._parse_query(selector)
-            qinstance = qvars['instance']
-            xpath = qvars['xpath']
+            qinstance = qvars["instance"]
+            xpath = qvars["xpath"]
         else:
             qinstance = selector
 
         for ristype in monolith.types:
-            if 'Instances' in monolith.types[ristype]:
-                for instance in monolith.types[ristype]['Instances']:
+            if "Instances" in monolith.types[ristype]:
+                for instance in monolith.types[ristype]["Instances"]:
                     try:
-                        odata = instance.resp.dict['@odata.type'].lower()
+                        odata = instance.resp.dict["@odata.type"].lower()
                     except Exception:
-                        odata = ''
+                        odata = ""
 
-                    if qinstance.lower() in instance.type.lower() \
-                            or qinstance == '"*"' or qinstance.lower() in odata:
+                    if (
+                        qinstance.lower() in instance.type.lower()
+                        or qinstance == '"*"'
+                        or qinstance.lower() in odata
+                    ):
                         if not sel is None and not val is None:
                             currdict = instance.resp.dict
 
@@ -1584,16 +1768,21 @@ class RmcApp(object):
                                         if not val[:-1] in str(currdict[sel]):
                                             continue
                                     else:
-                                        if not str(currdict[sel]).\
-                                                                startswith(val):
+                                        if not str(currdict[sel]).startswith(
+                                            val
+                                        ):
                                             continue
                                 else:
                                     newargs = sel.split("/")
                                     content = copy.deepcopy(currdict)
 
-                                    if self.filterworkerfunction(workdict=\
-                                                content, sel=sel, val=val, \
-                                                newargs=newargs, loopcount=0):
+                                    if self.filterworkerfunction(
+                                        workdict=content,
+                                        sel=sel,
+                                        val=val,
+                                        newargs=newargs,
+                                        loopcount=0,
+                                    ):
                                         instances.append(instance)
                                     continue
                             except Exception:
@@ -1606,8 +1795,9 @@ class RmcApp(object):
 
         return instances
 
-    def filterworkerfunction(self, workdict=None, sel=None, val=None, \
-                                                    newargs=None, loopcount=0):
+    def filterworkerfunction(
+        self, workdict=None, sel=None, val=None, newargs=None, loopcount=0
+    ):
         """Helper function for filter application
 
         :param workdict: working copy of current dictionary.
@@ -1626,8 +1816,13 @@ class RmcApp(object):
         if workdict and sel and val and newargs:
             if isinstance(workdict, list):
                 for item in workdict:
-                    if self.filterworkerfunction(workdict=item, sel=sel, \
-                                 val=val, newargs=newargs, loopcount=loopcount):
+                    if self.filterworkerfunction(
+                        workdict=item,
+                        sel=sel,
+                        val=val,
+                        newargs=newargs,
+                        loopcount=loopcount,
+                    ):
                         return True
 
                 return False
@@ -1642,15 +1837,22 @@ class RmcApp(object):
 
                     return False
 
-                if not (isinstance(workdict[newargs[loopcount]], list) or \
-                                isinstance(workdict[newargs[loopcount]], dict)):
+                if not (
+                    isinstance(workdict[newargs[loopcount]], list)
+                    or isinstance(workdict[newargs[loopcount]], dict)
+                ):
                     return False
 
                 workdict = workdict[newargs[loopcount]]
                 loopcount += 1
 
-                if self.filterworkerfunction(workdict=workdict, sel=sel, \
-                                 val=val, newargs=newargs, loopcount=loopcount):
+                if self.filterworkerfunction(
+                    workdict=workdict,
+                    sel=sel,
+                    val=val,
+                    newargs=newargs,
+                    loopcount=loopcount,
+                ):
                     return True
 
         return False
@@ -1661,8 +1863,8 @@ class RmcApp(object):
         monolith = self.current_client.monolith
 
         for ristype in monolith.types:
-            if 'Instances' in monolith.types[ristype]:
-                for instance in monolith.types[ristype]['Instances']:
+            if "Instances" in monolith.types[ristype]:
+                for instance in monolith.types[ristype]["Instances"]:
                     instances.append(instance)
 
         return instances
@@ -1687,17 +1889,19 @@ class RmcApp(object):
         instances["Comments"] = OrderedDict()
 
         for ristype in monolith.types:
-            if 'Instances' in monolith.types[ristype]:
-                for instance in monolith.types[ristype]['Instances']:
+            if "Instances" in monolith.types[ristype]:
+                for instance in monolith.types[ristype]["Instances"]:
                     if "computersystem." in instance.type.lower():
                         try:
                             if instance.resp.obj["Manufacturer"]:
-                                instances["Comments"]["Manufacturer"] = \
-                                            instance.resp.obj["Manufacturer"]
+                                instances["Comments"][
+                                    "Manufacturer"
+                                ] = instance.resp.obj["Manufacturer"]
 
                             if instance.resp.obj["Model"]:
-                                instances["Comments"]["Model"] = \
-                                                    instance.resp.obj["Model"]
+                                instances["Comments"][
+                                    "Model"
+                                ] = instance.resp.obj["Model"]
                         except Exception:
                             pass
 
@@ -1714,17 +1918,23 @@ class RmcApp(object):
     def get_filter_settings(self):
         """Helper function to return current select option"""
         if self.current_client:
-            if not self.current_client.filter_attr is None and not \
-                                    self.current_client.filter_value is None:
-                return (self.current_client.filter_attr, \
-                                            self.current_client.filter_value)
+            if (
+                not self.current_client.filter_attr is None
+                and not self.current_client.filter_value is None
+            ):
+                return (
+                    self.current_client.filter_attr,
+                    self.current_client.filter_value,
+                )
 
         return (None, None)
 
     def erase_filter_settings(self):
         """Helper function to return current select option"""
         if self.current_client:
-            if not self.current_client.filter_attr is None or \
-                                not self.current_client.filter_value is None:
+            if (
+                not self.current_client.filter_attr is None
+                or not self.current_client.filter_value is None
+            ):
                 self.current_client.filter_attr = None
                 self.current_client.filter_value = None

@@ -3,17 +3,22 @@
 # License: BSD 3-Clause License. For full text see link: https://github.com/DMTF/python-redfish-library/blob/master/LICENSE.md
 
 import sys
+
 import redfish
 
-# When running remotely connect using the address, account name, 
+# When running remotely connect using the address, account name,
 # and password to send https requests
 login_host = "https://192.168.1.100"
 login_account = "admin"
 login_password = "password"
 
 ## Create a REDFISH object
-REDFISH_OBJ = redfish.redfish_client(base_url=login_host, username=login_account, \
-                          password=login_password, default_prefix='/redfish/v1')
+REDFISH_OBJ = redfish.redfish_client(
+    base_url=login_host,
+    username=login_account,
+    password=login_password,
+    default_prefix="/redfish/v1",
+)
 
 # Login into the server and create a session
 REDFISH_OBJ.login(auth="session")

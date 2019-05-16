@@ -163,6 +163,7 @@ class RestResponse(object):
         self._status = None
         self._session_key = None
         self._session_location = None
+        self._task_location = None
         self._rest_request = rest_request
         self._http_response = http_response
 
@@ -266,6 +267,36 @@ class RestResponse(object):
 
         self._session_location = self._http_response.getheader('location')
         return self._session_location
+
+    @property
+    def task_location(self):
+        """Return if we're a PATCH/POST in with a task link """
+        if self._task_location:
+            return self._task_location
+
+        self._task_location = self._http_response.getheader('location')
+        return self._task_location
+
+    @property
+    def is_processing(self):
+        """Check if we're a PATCH/POST in progress """
+        return self.status == 202
+
+    @property
+    def retry_after(self):
+        """Retry After header"""
+        return self._http_response.getheader('retry-after')
+
+    def monitor(self, context):
+        """Function to process Task, used on an action or POST/PATCH that returns 202"""
+        my_href = self.task_location
+        if self.is_processing:
+            if my_href:
+                my_content = context.get(my_href, None)
+                return my_content
+            elif my_href is None:
+                raise ValueError('We are processing a 202, but provide no location')
+        return self
 
     @property
     def request(self):

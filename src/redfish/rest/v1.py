@@ -163,6 +163,7 @@ class RestResponse(object):
         self._status = None
         self._session_key = None
         self._session_location = None
+        self._task_location = None
         self._rest_request = rest_request
         self._http_response = http_response
 
@@ -270,7 +271,11 @@ class RestResponse(object):
     @property
     def task_location(self):
         """Return if we're a PATCH/POST in with a task link """
-        return self.session_location
+        if self._task_location:
+            return self._task_location
+
+        self._task_location = self._http_response.getheader('location')
+        return self._task_location
 
     @property
     def is_processing(self):

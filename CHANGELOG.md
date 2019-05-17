@@ -1,5 +1,8 @@
 # Change Log
 
+## [2.0.8] - 2019-05-17
+- Added helper functions for Task processing
+
 ## [2.0.7] - 2019-02-08
 - Added optional timeout and max retry arguments
 

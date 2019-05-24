@@ -1,30 +1,28 @@
 # -*- encoding: utf-8 -*-
 import unittest
 
-from redfish.rest.v1 import redfish_client
 from redfish.rest.v1 import HttpClient
 from redfish.rest.v1 import RetriesExhaustedError
+from redfish.rest.v1 import redfish_client
 
 
 class TestRedFishClient(unittest.TestCase):
     def test_redfish_client(self):
-        base_url = 'http://foo.bar'
-        username='rstallman'
-        password='123456'
-        default_prefix='/custom/redfish/v1/'
-        sessionkey='fg687glgkf56vlgkf'
-        capath='/path/to/the/dir'
-        cafile='filename.test'
-        timeout=666
-        max_retry=42
+        base_url = "http://foo.bar"
+        username = "rstallman"
+        password = "123456"
+        default_prefix = "/custom/redfish/v1/"
+        sessionkey = "fg687glgkf56vlgkf"
+        capath = "/path/to/the/dir"
+        cafile = "filename.test"
+        timeout = 666
+        max_retry = 42
         # NOTE(hberaud) the client try to connect when we initialize the
         # http client object so we need to catch the retries exception first.
         # In a second time we need to mock the six.http_client to simulate
         # server responses and do some other tests
         with self.assertRaises(RetriesExhaustedError):
-            client = redfish_client(
-                base_url=base_url,
-            )
+            client = redfish_client(base_url=base_url)
             # Check the object type
             self.assertTrue(isinstance(client, HttpClient))
             # Check the object attributes values.

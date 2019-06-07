@@ -136,7 +136,7 @@ class AutoConfigParser(object):
             ackey = '_ac__%s' % key
             config.set(self._sectionname, key, str(self.__dict__[ackey]))
 
-        fileh = open(self._configfile, 'wb')
+        fileh = open(self._configfile, 'w')
         config.write(fileh)
         fileh.close()
 

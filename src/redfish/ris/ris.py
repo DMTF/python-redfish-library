@@ -7,19 +7,22 @@
 
 #---------Imports---------
 
+import abc
+import logging
 import sys
 import six
 import logging
 import threading
-
-from six.moves.queue import Queue
-from six.moves.urllib.parse import \
-        urlparse, urlencode, urlunparse
 from collections import (OrderedDict)
 
-import jsonpath_rw
-import redfish.rest.v1
+import six
+from six.moves.queue import Queue
+from six.moves.urllib.parse import urlparse
+from six.moves.urllib.parse import urlunparse
 
+import jsonpath_rw
+
+import redfish.rest.v1
 from redfish.ris.sharedtypes import Dictable
 
 #---------End of imports---------
@@ -34,6 +37,7 @@ class SessionExpiredRis(Exception):
     """Raised when session has expired"""
     pass
 
+@six.add_metaclass(abc.ABCMeta)
 class RisMonolithMemberBase(Dictable):
     """RIS monolith member base class"""
     pass

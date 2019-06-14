@@ -7,7 +7,8 @@ import unittest
 from redfish.ris.config import AutoConfigParser
 
 
-CONFIG = textwrap.dedent("""
+CONFIG = textwrap.dedent(
+    """
     [DEFAULT]
     ServerAliveInterval = 45
     Compression = yes
@@ -20,7 +21,8 @@ CONFIG = textwrap.dedent("""
     [topsecret.server.com]
     Port = 50022
     ForwardX11 = no
-""")
+"""
+)
 
 
 class TestAutoConfigParser(unittest.TestCase):

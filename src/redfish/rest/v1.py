@@ -843,7 +843,8 @@ class RestClientBase(object):
                 if isinstance(excp, DecompressResponseError):
                     raise
 
-                cause_exception = excp
+                if not cause_exception:
+                    cause_exception = excp
                 LOGGER.info('Retrying %s [%s]'% (path, excp))
                 time.sleep(1)
 

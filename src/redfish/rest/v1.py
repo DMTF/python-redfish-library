@@ -21,6 +21,7 @@ from collections import (OrderedDict)
 import six
 from six.moves.urllib.parse import urlparse, urlencode, urlunparse
 from six.moves import http_client
+from six import raise_from
 from six import string_types
 from six import StringIO
 from six import BytesIO
@@ -782,6 +783,7 @@ class RestClientBase(object):
 
         attempts = 0
         restresp = None
+        cause_exception = None
         while attempts <= self._max_retry:
             if LOGGER.isEnabledFor(logging.DEBUG):
                 try:
@@ -841,6 +843,7 @@ class RestClientBase(object):
                 if isinstance(excp, DecompressResponseError):
                     raise
 
+                cause_exception = excp
                 LOGGER.info('Retrying %s [%s]'% (path, excp))
                 time.sleep(1)
 
@@ -872,7 +875,7 @@ class RestClientBase(object):
 
             return restresp
         else:
-            raise RetriesExhaustedError()
+            raise_from(RetriesExhaustedError(), cause_exception)
 
     def login(self, username=None, password=None, auth=AuthMethod.BASIC):
         """Login and start a REST session.  Remember to call logout() when"""

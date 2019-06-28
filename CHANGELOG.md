@@ -1,5 +1,10 @@
 # Change Log
 
+## [2.0.9] - 2019-06-28
+- Added various unit tests and other cleanup
+- Added example for how to use the 'with' statement to perform automatically log out of a service
+- Made change to include the original trace when RetriesExhaustedError is encountered
+
 ## [2.0.8] - 2019-05-17
 - Added helper functions for Task processing
 

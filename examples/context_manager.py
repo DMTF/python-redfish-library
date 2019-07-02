@@ -13,9 +13,6 @@ login_password = "password"
 
 ## Create a REDFISH object
 with redfish.redfish_client(base_url=login_host, username=login_account, password=login_password) as REDFISH_OBJ:
-    # Login into the server and create a session
-    REDFISH_OBJ.login(auth="session")
-
     # Do a GET on a given path
     response = REDFISH_OBJ.get("/redfish/v1/systems/1", None)
 

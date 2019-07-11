@@ -853,7 +853,6 @@ class RestClientBase(object):
             else:
                 break
 
-        self.__destroy_connection()
         if attempts <= self._max_retry:
             if LOGGER.isEnabledFor(logging.DEBUG):
                 headerstr = ''
@@ -878,7 +877,7 @@ class RestClientBase(object):
         else:
             raise_from(RetriesExhaustedError(), cause_exception)
 
-    def login(self, username=None, password=None, auth=AuthMethod.BASIC):
+    def login(self, username=None, password=None, auth=AuthMethod.SESSION):
         """Login and start a REST session.  Remember to call logout() when"""
         """ you are done.
 

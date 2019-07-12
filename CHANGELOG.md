@@ -1,5 +1,9 @@
 # Change Log
 
+## [2.1.0] - 2019-07-12
+- Changed default authentication to be Session based
+- Removed unnecessary closing of sockets
+
 ## [2.0.9] - 2019-06-28
 - Added various unit tests and other cleanup
 - Added example for how to use the 'with' statement to perform automatically log out of a service

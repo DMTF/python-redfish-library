@@ -434,10 +434,10 @@ class RestClientBase(object):
 
         """
 
-        self.__base_url = base_url
+        self.__base_url = base_url.rstrip('/')
         self.__username = username
         self.__password = password
-        self.__url = urlparse(base_url)
+        self.__url = urlparse(self.__base_url)
         self.__session_key = sessionkey
         self.__authorization_key = None
         self.__session_location = None
@@ -536,7 +536,7 @@ class RestClientBase(object):
         :type url: str
 
         """
-        self.__base_url = url
+        self.__base_url = url.rstrip('/')
 
     def get_session_key(self):
         """Return session key"""

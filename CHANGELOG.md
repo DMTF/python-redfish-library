@@ -1,5 +1,9 @@
 # Change Log
 
+## [2.1.1] - 2019-08-16
+- Added option in SSDP discovery to specify a particular interface
+- Added sanitization to the Base URL to remove trailing slashes
+
 ## [2.1.0] - 2019-07-12
 - Changed default authentication to be Session based
 - Removed unnecessary closing of sockets

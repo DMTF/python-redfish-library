@@ -41,7 +41,7 @@ def sanitize(number, minimum, maximum=None):
     return number
 
 
-def discover_ssdp(port=1900, ttl=2, response_time=3):
+def discover_ssdp(port=1900, ttl=2, response_time=3, iface=None):
     """Discovers Redfish services via SSDP
 
     :param port: the port to use for the SSDP request
@@ -50,6 +50,8 @@ def discover_ssdp(port=1900, ttl=2, response_time=3):
     :type ttl: int
     :param response_time: the number of seconds in which a service can respond
     :type response_time: int
+    :param iface: the interface to use for the request; None for all
+    :type iface: string
 
     :returns: a set of discovery data
     """
@@ -72,6 +74,8 @@ def discover_ssdp(port=1900, ttl=2, response_time=3):
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, ttl)
+    if iface:
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_BINDTODEVICE, str(iface+"\0").encode("utf-8"))
     sock.sendto(bytearray(msearch_str, "utf-8"), (mcast_ip, port))
 
     # On the same socket, wait for responses

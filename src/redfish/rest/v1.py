@@ -15,6 +15,7 @@ import json
 import base64
 import urllib
 import logging
+import inspect
 
 from collections import (OrderedDict)
 
@@ -465,7 +466,7 @@ class RestClientBase(object):
 
         url = url if url else self.__url
         if url.scheme.upper() == "HTTPS":
-            if sys.version_info < (2, 7, 9):
+            if sys.version_info < (2, 7, 9) and "context" not in inspect.getargspec(http_client.HTTPSConnection.__init__).args:
                 self._conn = http_client.HTTPSConnection(url.netloc,
                                                          timeout=self._timeout)
             else:

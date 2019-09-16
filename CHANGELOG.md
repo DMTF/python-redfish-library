@@ -1,5 +1,8 @@
 # Change Log
 
+## [2.1.2] - 2019-09-16
+- Fixed usage of capath and cafile when setting them to None
+
 ## [2.1.1] - 2019-08-16
 - Added option in SSDP discovery to specify a particular interface
 - Added sanitization to the Base URL to remove trailing slashes

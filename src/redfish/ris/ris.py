@@ -21,6 +21,8 @@ from redfish.ris.sharedtypes import Dictable
 
 import six
 from six.moves.queue import Queue
+from six.moves.urllib.parse import ParseResult
+from six.moves.urllib.parse import quote
 from six.moves.urllib.parse import urlparse
 from six.moves.urllib.parse import urlunparse
 
@@ -369,15 +371,11 @@ class RisMonolith_v1_0_0(Dictable):
             if "/Logs/" in path:
                 return
 
-        # TODO: need to find a better way to support non ascii characters
-        path = path.replace("|", "%7C")
-
-        # remove fragments
-        newpath = urlparse(path)
-        newpath = list(newpath[:])
-        newpath[-1] = ""
-
-        path = urlunparse(tuple(newpath))
+        # remove fragments and quote characters in path
+        p = urlparse(path)
+        p = ParseResult(scheme=p.scheme, netloc=p.netloc, path=quote(p.path),
+                        params=p.params, query=p.query, fragment='')
+        path = urlunparse(p)
 
         LOGGER.debug("_loading %s", path)
 

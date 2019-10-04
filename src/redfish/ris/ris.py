@@ -369,33 +369,39 @@ class RisMonolith_v1_0_0(Dictable):
             if "/Logs/" in path:
                 return
 
-        # TODO: need to find a better way to support non ascii characters
-        path = path.replace("|", "%7C")
+        # catch any exceptions during URL parsing or GET requests
+        try:
+            # remove fragments
+            newpath = urlparse(path)
+            newpath = list(newpath[:])
+            newpath[-1] = ""
 
-        # remove fragments
-        newpath = urlparse(path)
-        newpath = list(newpath[:])
-        newpath[-1] = ""
+            path = urlunparse(tuple(newpath))
 
-        path = urlunparse(tuple(newpath))
+            LOGGER.debug("_loading %s", path)
 
-        LOGGER.debug("_loading %s", path)
+            if not self.reload:
+                if path.lower() in self._visited_urls:
+                    return
 
-        if not self.reload:
-            if path.lower() in self._visited_urls:
-                return
-
-        resp = self._client.get(path)
-
-        if resp.status != 200:
-            path = path + "/"
             resp = self._client.get(path)
 
-            if resp.status == 401:
-                raise SessionExpiredRis("Invalid session. Please logout and "
-                                        "log back in or include credentials.")
-            elif resp.status != 200:
-                return
+            if resp.status != 200:
+                path = path + "/"
+                resp = self._client.get(path)
+
+                if resp.status == 401:
+                    raise SessionExpiredRis("Invalid session. Please logout and "
+                                            "log back in or include credentials.")
+                elif resp.status != 200:
+                    return
+        except SessionExpiredRis:
+            raise
+        except Exception as e:
+            cause = e.__cause__ if e.__cause__ else e
+            LOGGER.error("Resource '{}' skipped due to exception: {}"
+                         .format(path, repr(cause)))
+            return
 
         self.queue.put((resp, path, skipinit, self))
 

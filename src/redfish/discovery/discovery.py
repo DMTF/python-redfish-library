@@ -41,7 +41,7 @@ def sanitize(number, minimum, maximum=None):
     return number
 
 
-def discover_ssdp(port=1900, ttl=2, response_time=3, iface=None):
+def discover_ssdp(port=1900, ttl=2, response_time=3, iface=None, protocol="ipv4"):
     """Discovers Redfish services via SSDP
 
     :param port: the port to use for the SSDP request
@@ -52,15 +52,28 @@ def discover_ssdp(port=1900, ttl=2, response_time=3, iface=None):
     :type response_time: int
     :param iface: the interface to use for the request; None for all
     :type iface: string
+    :param protocol: the type of protocol to use for the request; either 'ipv4' or 'ipv6'
+    :type protocol: string
 
     :returns: a set of discovery data
     """
     # Sanity check the inputs
+    valid_protocols = ("ipv4", "ipv6")
+    if protocol not in valid_protocols:
+        raise ValueError("Invalid protocol type. Expected one of: {}".format(valid_protocols))
     ttl = sanitize(ttl, minimum=1, maximum=255)
     response_time = sanitize(response_time, minimum=1)
 
+    if protocol == "ipv6":
+        mcast_ip = "ff02::c"
+        mcast_connection = (mcast_ip, port, 0, 0)
+        af_type = socket.AF_INET6
+    elif protocol == "ipv4":
+        mcast_ip = "239.255.255.250"
+        mcast_connection = (mcast_ip, port)
+        af_type = socket.AF_INET
+
     # Initialize the multicast data
-    mcast_ip = "239.255.255.250"
     msearch_str = (
         "M-SEARCH * HTTP/1.1\r\n"
         "Host: {}:{}\r\n"
@@ -71,12 +84,12 @@ def discover_ssdp(port=1900, ttl=2, response_time=3, iface=None):
     socket.setdefaulttimeout(response_time + 2)
 
     # Set up the socket and send the request
-    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
+    sock = socket.socket(af_type, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, ttl)
     if iface:
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_BINDTODEVICE, str(iface+"\0").encode("utf-8"))
-    sock.sendto(bytearray(msearch_str, "utf-8"), (mcast_ip, port))
+    sock.sendto(bytearray(msearch_str, "utf-8"), mcast_connection)
 
     # On the same socket, wait for responses
     discovered_services = {}

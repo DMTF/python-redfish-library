@@ -1,5 +1,9 @@
 # Change Log
 
+## [2.1.3] - 2019-10-11
+- Added IPv6 support to SSDP discovery
+- Enhanced handling of poorly formatted URIs to not throw an exception
+
 ## [2.1.2] - 2019-09-16
 - Fixed usage of capath and cafile when setting them to None
 

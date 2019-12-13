@@ -986,7 +986,15 @@ class HttpClient(RestClientBase):
                             cafile=cafile, timeout=timeout, \
                             max_retry=max_retry)
 
-        self.login_url = self.root.Links.Sessions['@odata.id']
+        try:
+            self.login_url = self.root.Links.Sessions['@odata.id']
+        except KeyError:
+            pass
+
+        try:
+            self.login_url = self.root.SessionService['@odata.id'] + "/Sessions"
+        except KeyError:
+            raise AttributeError("Links and SessionService missing in redfish root object.")
 
     def _rest_request(self, path='', method="GET", args=None, body=None,
                                                                 headers=None):

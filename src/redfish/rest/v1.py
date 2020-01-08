@@ -811,9 +811,15 @@ class RestClientBase(object):
                                                                 headers=headers)
                     self._conn_count += 1
 
-                    inittime = time.clock()
+                    if sys.version_info < (3, 3):
+                        inittime = time.clock()
+                    else:
+                        inittime = time.perf_counter()
                     resp = self._conn.getresponse()
-                    endtime = time.clock()
+                    if sys.version_info < (3, 3):
+                        endtime = time.clock()
+                    else:
+                        endtime = time.perf_counter()
                     LOGGER.info('Response Time to %s: %s seconds.'% \
                                         (restreq.path, str(endtime-inittime)))
 

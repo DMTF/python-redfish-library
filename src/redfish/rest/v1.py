@@ -989,12 +989,9 @@ class HttpClient(RestClientBase):
         try:
             self.login_url = self.root.Links.Sessions['@odata.id']
         except KeyError:
-            pass
-
-        try:
-            self.login_url = self.root.SessionService['@odata.id'] + "/Sessions"
-        except KeyError:
-            raise AttributeError("Links and SessionService missing in redfish root object.")
+            # While the "Links/Sessions" property is required, we can fallback
+            # on the URI hardened in 1.6.0 of the specification if not found
+            self.login_url = '/redfish/v1/SessionService/Sessions'
 
     def _rest_request(self, path='', method="GET", args=None, body=None,
                                                                 headers=None):

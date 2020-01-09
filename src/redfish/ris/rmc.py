@@ -307,9 +307,15 @@ class RmcApp(object):
 
         """
         monolith = self.current_client.monolith
-        inittime = time.clock()
+        if sys.version_info < (3, 3):
+            inittime = time.clock()
+        else:
+            inittime = time.perf_counter()
         monolith.load(path=path, includelogs=includelogs)
-        endtime = time.clock()
+        if sys.version_info < (3, 3):
+            endtime = time.clock()
+        else:
+            endtime = time.perf_counter()
 
         if verbose:
             sys.stdout.write("Monolith build process time: %s\n" % \

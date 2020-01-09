@@ -991,7 +991,7 @@ class HttpClient(RestClientBase):
         except KeyError:
             # While the "Links/Sessions" property is required, we can fallback
             # on the URI hardened in 1.6.0 of the specification if not found
-            LOGGER.warning('"Links/Sessions" not found in Service Root.')
+            LOGGER.debug('"Links/Sessions" not found in Service Root.')
             self.login_url = '/redfish/v1/SessionService/Sessions'
 
     def _rest_request(self, path='', method="GET", args=None, body=None,

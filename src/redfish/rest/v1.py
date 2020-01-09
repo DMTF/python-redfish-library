@@ -986,7 +986,13 @@ class HttpClient(RestClientBase):
                             cafile=cafile, timeout=timeout, \
                             max_retry=max_retry)
 
-        self.login_url = self.root.Links.Sessions['@odata.id']
+        try:
+            self.login_url = self.root.Links.Sessions['@odata.id']
+        except KeyError:
+            # While the "Links/Sessions" property is required, we can fallback
+            # on the URI hardened in 1.6.0 of the specification if not found
+            LOGGER.debug('"Links/Sessions" not found in Service Root.')
+            self.login_url = '/redfish/v1/SessionService/Sessions'
 
     def _rest_request(self, path='', method="GET", args=None, body=None,
                                                                 headers=None):

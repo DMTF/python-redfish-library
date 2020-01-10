@@ -1,5 +1,9 @@
 # Change Log
 
+## [2.1.4] - 2020-01-10
+- Added fallback to using '/redfish/v1/SessionService/Sessions' if the service root does not contains the 'Links/Sessions' property for login
+- Added Python version checks to use time.perf_counter() in favor of time.clock()
+
 ## [2.1.3] - 2019-10-11
 - Added IPv6 support to SSDP discovery
 - Enhanced handling of poorly formatted URIs to not throw an exception

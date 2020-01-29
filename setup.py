@@ -24,8 +24,14 @@ setup(name='redfish',
       packages=find_packages('src'),
       package_dir={'': 'src'},
       install_requires=[
-          'jsonpatch',
           'jsonpath_rw',
           'jsonpointer',
-          'urlparse2',
-      ])
+      ],
+      extras_require={
+          ':python_version == "3.4"': [
+              'jsonpatch<=1.24'
+          ],
+          ':python_version >= "3.5" or python_version == "2.7"': [
+              'jsonpatch'
+          ]
+      })

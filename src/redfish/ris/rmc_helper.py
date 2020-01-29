@@ -12,8 +12,9 @@ import json
 import errno
 import logging
 import hashlib
-import urlparse2
 import redfish.rest
+
+from six.moves.urllib.parse import urlparse
 
 from .ris import (RisMonolith)
 from .sharedtypes import (JSONEncoder)
@@ -146,7 +147,7 @@ class RmcClient(object):
 
     def get_cache_dirname(self):
         """The rest client's current base URL converted to path"""
-        parts = urlparse2.urlparse(self.get_base_url())
+        parts = urlparse(self.get_base_url())
         pathstr = '%s/%s' % (parts.netloc, parts.path)
         return pathstr.replace('//', '/')
 

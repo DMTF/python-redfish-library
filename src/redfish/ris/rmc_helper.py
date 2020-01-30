@@ -1,5 +1,5 @@
 # Copyright Notice:
-# Copyright 2016-2019 DMTF. All rights reserved.
+# Copyright 2016-2020 DMTF. All rights reserved.
 # License: BSD 3-Clause License. For full text see link: https://github.com/DMTF/python-redfish-library/blob/master/LICENSE.md
 
 # -*- coding: utf-8 -*-
@@ -12,8 +12,9 @@ import json
 import errno
 import logging
 import hashlib
-import urlparse2
 import redfish.rest
+
+from six.moves.urllib.parse import urlparse
 
 from .ris import (RisMonolith)
 from .sharedtypes import (JSONEncoder)
@@ -146,7 +147,7 @@ class RmcClient(object):
 
     def get_cache_dirname(self):
         """The rest client's current base URL converted to path"""
-        parts = urlparse2.urlparse(self.get_base_url())
+        parts = urlparse(self.get_base_url())
         pathstr = '%s/%s' % (parts.netloc, parts.path)
         return pathstr.replace('//', '/')
 

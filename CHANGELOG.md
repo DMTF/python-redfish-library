@@ -1,5 +1,9 @@
 # Change Log
 
+## [2.1.5] - 2020-02-03
+- Removed urlparse2 dependency
+- Updated jsonpatch requirements; jsonpatch 1.25 dropped Python 3.4 support
+
 ## [2.1.4] - 2020-01-10
 - Added fallback to using '/redfish/v1/SessionService/Sessions' if the service root does not contains the 'Links/Sessions' property for login
 - Added Python version checks to use time.perf_counter() in favor of time.clock()

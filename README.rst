@@ -145,6 +145,15 @@ Make sure you logout every session you create as it will remain alive until it t
 
 A logout deletes the current sesssion from the system. The redfish_client object destructor includes a logout statement.
 
+Using proxies
+~~~~~~~~~~~~~
+
+You can use a proxy by specifying the ``HTTP_PROXY`` and ``HTTPS_PROXY`` environment variables.
+
+.. code-block:: shell
+
+    export HTTP_PROXY="http://192.168.1.10:8888"
+    export HTTPS_PROXY="http://192.168.1.10:8888"
 
 Contributing
 ------------

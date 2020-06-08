@@ -7,6 +7,7 @@
 
 #---------Imports---------
 
+import os
 import sys
 import ssl
 import time
@@ -455,6 +456,39 @@ class RestClientBase(object):
         self.get_root_object()
         self.__destroy_connection()
 
+    @staticmethod
+    def _get_connection(url, **kwargs):
+        """
+        Wrapper function for the HTTPSConnection/HTTPConnection constructor
+        that handles proxies set by the HTTPS_PROXY and HTTP_PROXY environment
+        variables
+
+        :param url: the target URL
+        :param kwargs: keyword arguments for the connection constructor
+        :return: the connection
+        """
+        proxy = None
+        if url.scheme.upper() == "HTTPS":
+            connection = http_client.HTTPSConnection
+            if 'HTTPS_PROXY' in os.environ:
+                host = urlparse(os.environ['HTTPS_PROXY']).netloc
+                proxy = url.netloc
+            else:
+                host = url.netloc
+        else:
+            connection = http_client.HTTPConnection
+            if 'HTTP_PROXY' in os.environ:
+                host = urlparse(os.environ['HTTP_PROXY']).netloc
+                proxy = url.netloc
+            else:
+                host = url.netloc
+        conn = connection(host, **kwargs)
+        if proxy:
+            LOGGER.debug("Proxy %s connection to %s through %s" % (
+                url.scheme.upper(), proxy, host))
+            conn.set_tunnel(proxy)
+        return conn
+
     def __init_connection(self, url=None):
         """Function for initiating connection with remote server
 
@@ -467,20 +501,18 @@ class RestClientBase(object):
         url = url if url else self.__url
         if url.scheme.upper() == "HTTPS":
             if sys.version_info < (2, 7, 9) and "context" not in inspect.getargspec(http_client.HTTPSConnection.__init__).args:
-                self._conn = http_client.HTTPSConnection(url.netloc,
-                                                         timeout=self._timeout)
+                self._conn = self._get_connection(url, timeout=self._timeout)
             else:
                 if self.cafile or self.capath is not None:
                     ssl_context = ssl.create_default_context(
                         capath=self.capath, cafile=self.cafile)
                 else:
                     ssl_context = ssl._create_unverified_context()
-                self._conn = http_client.HTTPSConnection(url.netloc,
-                                                         context=ssl_context,
-                                                         timeout=self._timeout)
+                self._conn = self._get_connection(url,
+                                                  context=ssl_context,
+                                                  timeout=self._timeout)
         elif url.scheme.upper() == "HTTP":
-            self._conn = http_client.HTTPConnection(url.netloc,
-                                                    timeout=self._timeout)
+            self._conn = self._get_connection(url, timeout=self._timeout)
         else:
             pass
 

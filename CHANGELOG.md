@@ -1,5 +1,8 @@
 # Change Log
 
+## [2.1.6] - 2020-06-12
+- Added support for leveraging the 'HTTP_PROXY' and 'HTTPS_PROXY' environment variables to set up proxy information
+
 ## [2.1.5] - 2020-02-03
 - Removed urlparse2 dependency
 - Updated jsonpatch requirements; jsonpatch 1.25 dropped Python 3.4 support

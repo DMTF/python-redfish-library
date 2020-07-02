@@ -775,6 +775,9 @@ class RestClientBase(object):
             if isinstance(body, dict) or isinstance(body, list):
                 headers['Content-Type'] = 'application/json'
                 body = json.dumps(body)
+            elif isinstance(body, bytes):
+                headers['Content-Type'] = 'application/octet-stream'
+                body = body
             else:
                 headers['Content-Type'] = 'application/x-www-form-urlencoded'
                 body = urlencode(body)

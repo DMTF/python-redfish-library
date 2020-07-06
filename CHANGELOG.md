@@ -1,5 +1,8 @@
 # Change Log
 
+## [2.1.7] - 2020-07-06
+- Added support for setting the 'Content-Type' header to 'application/octet-stream' when binary data is provided in a request
+
 ## [2.1.6] - 2020-06-12
 - Added support for leveraging the 'HTTP_PROXY' and 'HTTPS_PROXY' environment variables to set up proxy information
 

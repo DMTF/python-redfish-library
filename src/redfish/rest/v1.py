@@ -979,7 +979,7 @@ class RestClientBase(object):
         """ Logout of session. YOU MUST CALL THIS WHEN YOU ARE DONE TO FREE"""
         """ UP SESSIONS"""
         if self.__session_key:
-            session_loc = self.__session_location.replace(self.__base_url, '')
+            session_loc = urlunparse(('', '') + urlparse(self.__session_location)[2:])
 
             resp = self.delete(session_loc)
             if resp.status not in [200, 202, 204]:

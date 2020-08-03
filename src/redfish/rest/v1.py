@@ -746,7 +746,9 @@ class RestClientBase(object):
         elif self.__authorization_key:
             headers['Authorization'] = self.__authorization_key
 
-        headers['Accept'] = '*/*'
+        if 'Accept' not in headers:
+            headers['Accept'] = '*/*'
+
         headers['Connection'] = 'Keep-Alive'
 
         return headers
@@ -1069,7 +1071,8 @@ class HttpClient(RestClientBase):
 
         """
         headers = super(HttpClient, self)._get_req_headers(headers)
-        headers['OData-Version'] = '4.0'
+        if 'OData-Version' not in headers:
+            headers['OData-Version'] = '4.0'
 
         return headers
 

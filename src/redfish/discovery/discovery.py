@@ -41,7 +41,7 @@ def sanitize(number, minimum, maximum=None):
     return number
 
 
-def discover_ssdp(port=1900, ttl=2, response_time=3, iface=None, address=None, protocol="ipv4"):
+def discover_ssdp(port=1900, ttl=2, response_time=3, iface=None, protocol="ipv4", address=None):
     """Discovers Redfish services via SSDP
 
     :param port: the port to use for the SSDP request
@@ -54,6 +54,8 @@ def discover_ssdp(port=1900, ttl=2, response_time=3, iface=None, address=None, p
     :type iface: string
     :param protocol: the type of protocol to use for the request; either 'ipv4' or 'ipv6'
     :type protocol: string
+    :param address: the address to use for the request; None for all 
+    :type address: string
 
     :returns: a set of discovery data
     """

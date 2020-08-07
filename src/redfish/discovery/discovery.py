@@ -41,7 +41,7 @@ def sanitize(number, minimum, maximum=None):
     return number
 
 
-def discover_ssdp(port=1900, ttl=2, response_time=3, iface=None, protocol="ipv4"):
+def discover_ssdp(port=1900, ttl=2, response_time=3, iface=None, protocol="ipv4", address=None):
     """Discovers Redfish services via SSDP
 
     :param port: the port to use for the SSDP request
@@ -54,6 +54,8 @@ def discover_ssdp(port=1900, ttl=2, response_time=3, iface=None, protocol="ipv4"
     :type iface: string
     :param protocol: the type of protocol to use for the request; either 'ipv4' or 'ipv6'
     :type protocol: string
+    :param address: the address to use for the request; None for all 
+    :type address: string
 
     :returns: a set of discovery data
     """
@@ -87,6 +89,8 @@ def discover_ssdp(port=1900, ttl=2, response_time=3, iface=None, protocol="ipv4"
     sock = socket.socket(af_type, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, ttl)
+    if address:
+        sock.bind((address, 0))
     if iface:
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_BINDTODEVICE, str(iface+"\0").encode("utf-8"))
     sock.sendto(bytearray(msearch_str, "utf-8"), mcast_connection)

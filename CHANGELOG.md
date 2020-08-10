@@ -3,7 +3,7 @@
 ## [2.1.8] - 2020-08-10
 - Added option to SSDP discover to bind to a specified address
 - Added ability to override built-in HTTP headers
-- Fixed issue where the location of a seesion was not being tracked properly for HTTP connections
+- Fixed issue where the location of a session was not being tracked properly for HTTP connections
 
 ## [2.1.7] - 2020-07-06
 - Added support for setting the 'Content-Type' header to 'application/octet-stream' when binary data is provided in a request

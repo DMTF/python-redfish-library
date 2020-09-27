@@ -18,7 +18,7 @@ git fetch && git rebase origin
 
 # Update the version number in setup.py and src/redfish/__init__.py
 sed -i -E 's/      version=.+,/      version='\'$1\'',/' setup.py
-sed -i -E 's/__version__ = .+/__version__ = "'$1'",/' src/redfish/__init__.py
+sed -i -E 's/__version__ = .+/__version__ = "'$1'"/' src/redfish/__init__.py
 
 # Update the change log file
 ex CHANGELOG.md <<eof

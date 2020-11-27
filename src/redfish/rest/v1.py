@@ -867,8 +867,11 @@ class RestClientBase(object):
                                                             resp.status == 304:
                         break
 
+                    # redirect handling
                     newloc = resp.getheader('location')
                     newurl = urlparse(newloc)
+                    if resp.status == 303:
+                        method = 'GET'
 
                     reqpath = newurl.path
                     self.__init_connection(newurl)

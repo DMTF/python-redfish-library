@@ -841,10 +841,13 @@ class RestClientBase(object):
             LOGGER.info('Attempt %s of %s', attempts, path)
 
             try:
+                redirect = False
                 while True:
                     if self._conn is None:
                         self.__init_connection()
 
+                    if redirect and hasattr(self._conn, 'set_debuglevel'):
+                        self._conn.set_debuglevel(1)  # DEBUG ONLY
                     self._conn.request(method.upper(), reqpath, body=body, \
                                                                 headers=headers)
                     self._conn_count += 1
@@ -858,20 +861,25 @@ class RestClientBase(object):
                         endtime = time.clock()
                     else:
                         endtime = time.perf_counter()
-                    LOGGER.info('Response Time to %s: %s seconds.'% \
-                                        (restreq.path, str(endtime-inittime)))
+                    LOGGER.info('Response Time for %s to %s: %s seconds.' %
+                                (method, reqpath, str(endtime-inittime)))
 
                     if resp.getheader('Connection') == 'close':
                         self.__destroy_connection()
+
+                    # redirect handling
                     if resp.status not in list(range(300, 399)) or \
                                                             resp.status == 304:
                         break
-
-                    # redirect handling
+                    redirect = True
                     newloc = resp.getheader('location')
                     newurl = urlparse(newloc)
                     if resp.status == 303:
                         method = 'GET'
+                        body = None
+                        for h in ['Content-Type', 'Content-Length']:
+                            if h in headers:
+                                del headers[h]
 
                     reqpath = newurl.path
                     self.__init_connection(newurl)

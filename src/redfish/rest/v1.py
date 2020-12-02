@@ -841,13 +841,10 @@ class RestClientBase(object):
             LOGGER.info('Attempt %s of %s', attempts, path)
 
             try:
-                redirect = False
                 while True:
                     if self._conn is None:
                         self.__init_connection()
 
-                    if redirect and hasattr(self._conn, 'set_debuglevel'):
-                        self._conn.set_debuglevel(1)  # DEBUG ONLY
                     self._conn.request(method.upper(), reqpath, body=body, \
                                                                 headers=headers)
                     self._conn_count += 1
@@ -871,7 +868,6 @@ class RestClientBase(object):
                     if resp.status not in list(range(300, 399)) or \
                                                             resp.status == 304:
                         break
-                    redirect = True
                     newloc = resp.getheader('location')
                     newurl = urlparse(newloc)
                     if resp.status == 303:

@@ -1,5 +1,8 @@
 # Change Log
 
+## [2.1.9] - 2020-12-04
+- Added handling for HTTP 303 responses as part of redirect handling
+
 ## [2.1.8] - 2020-08-10
 - Added option to SSDP discover to bind to a specified address
 - Added ability to override built-in HTTP headers

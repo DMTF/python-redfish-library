@@ -33,9 +33,6 @@ git add CHANGELOG.md setup.py src/redfish/__init__.py
 git commit -m "$1 versioning"
 git push origin master
 
-# Release to pypi
-python3 setup.py sdist && twine upload dist/*
-
 # Make new release in GitHub
 CHANGES="Changes since last release:"$'\n\n'"$CHANGES"
 gh release create $1 -n "$CHANGES"

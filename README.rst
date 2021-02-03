@@ -148,7 +148,7 @@ A logout deletes the current sesssion from the system. The redfish_client object
 Using proxies
 ~~~~~~~~~~~~~
 
-You can use a proxy by specifying the ``HTTP_PROXY`` and ``HTTPS_PROXY`` environment variables.
+You can use a proxy by specifying the ``HTTP_PROXY`` and ``HTTPS_PROXY`` environment variables. Hosts to be excluded from the proxy can be specified using the NO_PROXY environment variable.
 
 .. code-block:: shell
 

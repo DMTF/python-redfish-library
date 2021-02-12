@@ -1,6 +1,7 @@
 # Copyright Notice:
-# Copyright 2016-2019 DMTF. All rights reserved.
-# License: BSD 3-Clause License. For full text see link: https://github.com/DMTF/python-redfish-library/blob/master/LICENSE.md
+# Copyright 2016-2021 DMTF. All rights reserved.
+# License: BSD 3-Clause License. For full text see link:
+# https://github.com/DMTF/python-redfish-library/blob/master/LICENSE.md
 
 # -*- coding: utf-8 -*-
 """RMC implementation """
@@ -66,7 +67,7 @@ class RmcApp(object):
         # use the default config file
         if configfile is None:
             if os.name == 'nt':
-                configfile = os.path.join(os.path.dirname(sys.executable), \
+                configfile = os.path.join(os.path.dirname(sys.executable),
                                                                  'redfish.conf')
             else:
                 configfile = '/etc/redfish/redfish.conf'
@@ -249,7 +250,7 @@ class RmcApp(object):
 
     current_client = property(get_current_client, None)
 
-    def login(self, username=None, password=None, base_url=None, verbose=False,\
+    def login(self, username=None, password=None, base_url=None, verbose=False,
                                 path=None, skipbuild=False, includelogs=False):
         """Main worker function for login command
 
@@ -270,8 +271,8 @@ class RmcApp(object):
 
         """
         if not self.check_current_rmc_client(url=base_url):
-            raise CurrentlyLoggedInError("Currently logged into another " \
-                                         "server. \nPlease log out out first " \
+            raise CurrentlyLoggedInError("Currently logged into another "
+                                         "server. \nPlease log out out first "
                                          "before logging in to another.")
 
         existing_client = self.get_rmc_client(url=base_url)
@@ -280,7 +281,7 @@ class RmcApp(object):
                                                             password=password)
         else:
             try:
-                self.add_rmc_client(RmcClient(username=username, \
+                self.add_rmc_client(RmcClient(username=username,
                                               password=password, url=base_url))
             except Exception as excp:
                 raise excp
@@ -291,7 +292,7 @@ class RmcApp(object):
             raise excp
 
         if not skipbuild:
-            self.build_monolith(verbose=verbose, path=path, \
+            self.build_monolith(verbose=verbose, path=path,
                                                         includelogs=includelogs)
             self.save()
 
@@ -343,7 +344,7 @@ class RmcApp(object):
 
         for session in sessionlocs:
             try:
-                self.delete_handler(session[0], url=session[1], \
+                self.delete_handler(session[0], url=session[1],
                             sessionid=session[2], silent=True, service=True)
             except:
                 pass
@@ -393,7 +394,7 @@ class RmcApp(object):
 
         return results
 
-    def get_save(self, selector=None, currentoverride=False, pluspath=False, \
+    def get_save(self, selector=None, currentoverride=False, pluspath=False,
                                                                 onlypath=None):
         """Special main function for get in save command
 
@@ -469,11 +470,11 @@ class RmcApp(object):
         skip = False
 
         for item in instances:
-            if (path + "/settings").lower() == (item.resp.request.path).lower():
+            if (path + "/settings").lower() == item.resp.request.path.lower():
                 skip = True
                 break
             elif (path + "settings/").lower() == \
-                                            (item.resp.request.path).lower():
+                                            item.resp.request.path.lower():
                 skip = True
                 break
 
@@ -526,7 +527,7 @@ class RmcApp(object):
 
                     if val:
                         if str(val)[0] == "[" and str(val)[-1] == "]":
-                            json_node = jsonpointer.set_pointer(newdict, \
+                            json_node = jsonpointer.set_pointer(newdict,
                                 json_pstr, '"' + str(val) + '"', inplace=True)
                         else:
                             listfound = True
@@ -534,7 +535,7 @@ class RmcApp(object):
                         listfound = True
 
                     if listfound:
-                        json_node = jsonpointer.set_pointer(newdict, \
+                        json_node = jsonpointer.set_pointer(newdict,
                                                 json_pstr, val, inplace=True)
 
                     json_node = jsonpointer.resolve_pointer(newdict, json_pstr)
@@ -610,7 +611,7 @@ class RmcApp(object):
                             skip = True
                             break
             except:
-                if not ("allow" in instance.resp._headers and "PATCH" in \
+                if not ("allow" in instance.resp._headers and "PATCH" in
                                             instance.resp._headers["allow"]):
                     if verbose:
                         self.warning_handler('Skipping read-only path: ' \
@@ -692,7 +693,7 @@ class RmcApp(object):
                     for ind, item in enumerate(dicttolist):
                         try:
                             if not isinstance(item[1], list):
-                                dicttolist[ind] = items[itemslower.index(\
+                                dicttolist[ind] = items[itemslower.index(
                                                     item[0].lower())], item[1]
                             else:
                                 templist.append(item[0])
@@ -739,7 +740,7 @@ class RmcApp(object):
 
                     if iterval:
                         if str(iterval)[0] == "[" and str(iterval)[-1] == "]":
-                            json_node = jsonpointer.set_pointer(newdict, \
+                            json_node = jsonpointer.set_pointer(newdict,
                                             json_pstr, '"' + str(iterval) + \
                                             '"', inplace=True)
                         else:
@@ -748,7 +749,7 @@ class RmcApp(object):
                         listfound = True
 
                     if listfound:
-                        json_node = jsonpointer.set_pointer(newdict, \
+                        json_node = jsonpointer.set_pointer(newdict,
                                             json_pstr, iterval, inplace=True)
 
                     json_node = jsonpointer.resolve_pointer(newdict, json_pstr)
@@ -1143,8 +1144,8 @@ class RmcApp(object):
 
         :param currdict: current selection dictionary.
         :type currdict: dict.
-        :param currdict: new selection dictionary.
-        :type currdict: dict.
+        :param newdict: new selection dictionary.
+        :type newdict: dict.
 
         """
         for k, itemv2 in list(newdict.items()):
@@ -1156,7 +1157,7 @@ class RmcApp(object):
             else:
                 currdict[k] = itemv2
 
-    def patch_handler(self, put_path, body, verbose=False, url=None, \
+    def patch_handler(self, put_path, body, verbose=False, url=None,
                   sessionid=None, headers=None, response=False, silent=False):
         """Main worker function for raw patch command
 
@@ -1174,14 +1175,16 @@ class RmcApp(object):
         :type headers: str.
         :param response: flag to return the response.
         :type response: str.
+        :param silent: flag to disable output.
+        :type silent: boolean.
         :returns: returns RestResponse object containing response data
 
         """
         if sessionid:
-            results = RmcClient(url=url, sessionkey=sessionid).set(put_path, \
+            results = RmcClient(url=url, sessionkey=sessionid).set(put_path,
                                                     body=body, headers=headers)
         else:
-            results = self.current_client.set(put_path, body=body, \
+            results = self.current_client.set(put_path, body=body,
                                                                 headers=headers)
 
         if not silent:
@@ -1192,7 +1195,7 @@ class RmcApp(object):
         if response:
             return results
 
-    def get_handler(self, put_path, silent=False, verbose=False, url=None, \
+    def get_handler(self, put_path, silent=False, verbose=False, url=None,
                 sessionid=None, uncache=False, headers=None, response=False):
         """main worker function for raw get command
 
@@ -1216,10 +1219,10 @@ class RmcApp(object):
 
         """
         if sessionid:
-            results = RmcClient(url=url, sessionkey=sessionid).get(put_path, \
+            results = RmcClient(url=url, sessionkey=sessionid).get(put_path,
                                                                headers=headers)
         else:
-            results = self.current_client.get(put_path, uncache=uncache, \
+            results = self.current_client.get(put_path, uncache=uncache,
                                                                 headers=headers)
 
         if not silent:
@@ -1232,7 +1235,7 @@ class RmcApp(object):
         else:
             return None
 
-    def post_handler(self, put_path, body, verbose=False, url=None, \
+    def post_handler(self, put_path, body, verbose=False, url=None,
                  sessionid=None, headers=None, response=False, silent=False):
         """Main worker function for raw post command
 
@@ -1250,14 +1253,16 @@ class RmcApp(object):
         :type headers: str.
         :param response: flag to return the response.
         :type response: str.
+        :param silent: flag to disable output.
+        :type silent: boolean.
         :returns: returns a RestResponse from client's Post command
 
         """
         if sessionid:
-            results = RmcClient(url=url, sessionkey=sessionid).toolpost(\
+            results = RmcClient(url=url, sessionkey=sessionid).toolpost(
                                         put_path, body=body, headers=headers)
         else:
-            results = self.current_client.toolpost(put_path, body=body, \
+            results = self.current_client.toolpost(put_path, body=body,
                                                                 headers=headers)
 
         if not silent:
@@ -1268,7 +1273,7 @@ class RmcApp(object):
         if response:
             return results
 
-    def put_handler(self, put_path, body, verbose=False, url=None, \
+    def put_handler(self, put_path, body, verbose=False, url=None,
                     sessionid=None, headers=None, response=False, silent=False):
         """Main worker function for raw put command
 
@@ -1286,14 +1291,16 @@ class RmcApp(object):
         :type headers: str.
         :param response: flag to return the response.
         :type response: str.
+        :param silent: flag to disable output.
+        :type silent: boolean.
         :returns: returns a RestResponse object from client's Put command
 
         """
         if sessionid:
-            results = RmcClient(url=url, sessionkey=sessionid).toolput(\
+            results = RmcClient(url=url, sessionkey=sessionid).toolput(
                                            put_path, body=body, headers=headers)
         else:
-            results = self.current_client.toolput(put_path, body=body, \
+            results = self.current_client.toolput(put_path, body=body,
                                                                 headers=headers)
 
         if not silent:
@@ -1304,7 +1311,7 @@ class RmcApp(object):
         if response:
             return results
 
-    def delete_handler(self, put_path, verbose=False, url=None, \
+    def delete_handler(self, put_path, verbose=False, url=None,
                                     sessionid=None, headers=None, silent=True):
         """Main worker function for raw delete command
 
@@ -1324,7 +1331,7 @@ class RmcApp(object):
 
         """
         if sessionid:
-            results = RmcClient(url=url, sessionkey=sessionid).tooldelete(\
+            results = RmcClient(url=url, sessionkey=sessionid).tooldelete(
                                                     put_path, headers=headers)
         else:
             results = self.current_client.tooldelete(put_path, headers=headers)
@@ -1336,7 +1343,7 @@ class RmcApp(object):
 
         return results
 
-    def head_handler(self, put_path, verbose=False, url=None, sessionid=None, \
+    def head_handler(self, put_path, verbose=False, url=None, sessionid=None,
                                                                 silent=False):
         """Main worker function for raw head command
 
@@ -1348,6 +1355,8 @@ class RmcApp(object):
         :type url: str.
         :param sessionid: session id to be used instead of credentials.
         :type sessionid: str.
+        :param silent: flag to disable output.
+        :type silent: boolean.
         :returns: returns a RestResponse object from client's Head command
 
         """
@@ -1383,7 +1392,7 @@ class RmcApp(object):
 
         qgroups = qmatch.groupdict()
 
-        return dict(instance=qgroups['instance'], \
+        return dict(instance=qgroups['instance'],
                                             xpath=qgroups.get('xpath', None))
 
     def invalid_return_handler(self, results, verbose=False):
@@ -1403,7 +1412,7 @@ class RmcApp(object):
                     self.warning_handler("[%d] The operation completed " \
                                             "successfully.\n" % results.status)
                 else:
-                    self.warning_handler("The operation completed "\
+                    self.warning_handler("The operation completed "
                                                             "successfully.\n")
             else:
                 self.warning_handler("[%d] No message returned.\n" % \
@@ -1598,7 +1607,7 @@ class RmcApp(object):
                                     content = copy.deepcopy(currdict)
 
                                     if self.filterworkerfunction(workdict=\
-                                                content, sel=sel, val=val, \
+                                                content, sel=sel, val=val,
                                                 newargs=newargs, loopcount=0):
                                         instances.append(instance)
                                     continue
@@ -1612,7 +1621,7 @@ class RmcApp(object):
 
         return instances
 
-    def filterworkerfunction(self, workdict=None, sel=None, val=None, \
+    def filterworkerfunction(self, workdict=None, sel=None, val=None,
                                                     newargs=None, loopcount=0):
         """Helper function for filter application
 
@@ -1632,7 +1641,7 @@ class RmcApp(object):
         if workdict and sel and val and newargs:
             if isinstance(workdict, list):
                 for item in workdict:
-                    if self.filterworkerfunction(workdict=item, sel=sel, \
+                    if self.filterworkerfunction(workdict=item, sel=sel,
                                  val=val, newargs=newargs, loopcount=loopcount):
                         return True
 
@@ -1648,14 +1657,14 @@ class RmcApp(object):
 
                     return False
 
-                if not (isinstance(workdict[newargs[loopcount]], list) or \
+                if not (isinstance(workdict[newargs[loopcount]], list) or
                                 isinstance(workdict[newargs[loopcount]], dict)):
                     return False
 
                 workdict = workdict[newargs[loopcount]]
                 loopcount += 1
 
-                if self.filterworkerfunction(workdict=workdict, sel=sel, \
+                if self.filterworkerfunction(workdict=workdict, sel=sel,
                                  val=val, newargs=newargs, loopcount=loopcount):
                     return True
 
@@ -1722,7 +1731,7 @@ class RmcApp(object):
         if self.current_client:
             if not self.current_client.filter_attr is None and not \
                                     self.current_client.filter_value is None:
-                return (self.current_client.filter_attr, \
+                return (self.current_client.filter_attr,
                                             self.current_client.filter_value)
 
         return (None, None)

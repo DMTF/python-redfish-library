@@ -1,3 +1,8 @@
+# Copyright Notice:
+# Copyright 2016-2021 DMTF. All rights reserved.
+# License: BSD 3-Clause License. For full text see link:
+# https://github.com/DMTF/python-redfish-library/blob/master/LICENSE.md
+
 from setuptools import setup, find_packages
 from codecs import open
 from os import path
@@ -14,9 +19,9 @@ setup(name='redfish',
       author = 'DMTF, https://www.dmtf.org/standards/feedback',
       license='BSD 3-clause "New" or "Revised License"',
       classifiers=[
-          'Development Status :: 4 - Beta',
+          'Development Status :: 5 - Production/Stable',
           'License :: OSI Approved :: BSD License',
-          'Programming Language :: Python',
+          'Programming Language :: Python :: 3',
           'Topic :: Communications'
       ],
       keywords='Redfish',
@@ -31,7 +36,7 @@ setup(name='redfish',
           ':python_version == "3.4"': [
               'jsonpatch<=1.24'
           ],
-          ':python_version >= "3.5" or python_version == "2.7"': [
+          ':python_version >= "3.5"': [
               'jsonpatch'
           ]
       })

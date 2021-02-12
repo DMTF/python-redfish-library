@@ -1,6 +1,7 @@
 # Copyright Notice:
-# Copyright 2016-2020 DMTF. All rights reserved.
-# License: BSD 3-Clause License. For full text see link: https://github.com/DMTF/python-redfish-library/blob/master/LICENSE.md
+# Copyright 2016-2021 DMTF. All rights reserved.
+# License: BSD 3-Clause License. For full text see link:
+# https://github.com/DMTF/python-redfish-library/blob/master/LICENSE.md
 
 # -*- coding: utf-8 -*-
 """RMC helper implementation"""
@@ -14,7 +15,7 @@ import logging
 import hashlib
 import redfish.rest
 
-from six.moves.urllib.parse import urlparse
+from urllib.parse import urlparse
 
 from .ris import (RisMonolith)
 from .sharedtypes import (JSONEncoder)
@@ -93,7 +94,7 @@ class RmcClient(object):
         :type sessionkey: str
 
         """
-        self._rest_client = redfish.rest.v1.redfish_client(base_url=url, \
+        self._rest_client = redfish.rest.v1.redfish_client(base_url=url,
                    username=username, password=password, sessionkey=sessionkey)
 
         self._get_cache = dict()
@@ -217,6 +218,8 @@ class RmcClient(object):
         :rtype: redfish.rest.v1.RestResponse.
         :param uncache: flag to not store the data downloaded into cache.
         :type uncache: boolean.
+        :param headers: dict of headers to be appended.
+        :type headers: dict.
 
         """
         resp = self._rest_client.get(path=path, args=args, headers=headers)
@@ -233,6 +236,8 @@ class RmcClient(object):
         :type path: str.
         :param args: GET arguments.
         :type args: str.
+        :param headers: dict of headers to be appended.
+        :type headers: dict.
         :returns: a RestResponse object containing the response data.
         :rtype: redfish.rest.v1.RestResponse.
 
@@ -258,7 +263,7 @@ class RmcClient(object):
         resp = self._rest_client.get(path=path, args=args)
         self._get_cache[path] = resp
 
-        return self._rest_client.patch(path=path, args=args, body=body, \
+        return self._rest_client.patch(path=path, args=args, body=body,
                                                                 headers=headers)
 
     def toolpost(self, path, args=None, body=None, headers=None):
@@ -279,7 +284,7 @@ class RmcClient(object):
         resp = self._rest_client.get(path=path, args=args)
         self._get_cache[path] = resp
 
-        return self._rest_client.post(path=path, args=args, body=body, \
+        return self._rest_client.post(path=path, args=args, body=body,
                                                                 headers=headers)
 
     def toolput(self, path, args=None, body=None, headers=None):
@@ -300,7 +305,7 @@ class RmcClient(object):
         resp = self._rest_client.get(path=path, args=args)
         self._get_cache[path] = resp
 
-        return self._rest_client.put(path=path, args=args, body=body, \
+        return self._rest_client.put(path=path, args=args, body=body,
                                                                 headers=headers)
 
     def tooldelete(self, path, args=None, headers=None):
@@ -310,8 +315,6 @@ class RmcClient(object):
         :type path: str.
         :param args: DELETE arguments.
         :type args: str.
-        :param body: contents of the DELETE request.
-        :type body: str.
         :param headers: list of headers to be appended.
         :type headers: list.
         :returns: a RestResponse object containing the response data.
@@ -541,7 +544,7 @@ class RmcFileCacheManager(RmcCacheManager):
                                     loc = item['login']['session_location'].\
                                                 split(item['login']['url'])[-1]
                                     sesurl = item['login']['url']
-                                    sessionlocs.append((loc, sesurl, \
+                                    sessionlocs.append((loc, sesurl,
                                                 item['login']['session_key']))
 
                         os.remove(os.path.join(cachedir, index['href']))
@@ -591,17 +594,17 @@ class RmcFileCacheManager(RmcCacheManager):
                     if 'url' not in login_data:
                         continue
 
-                    rmc_client = RmcClient(\
-                        username=login_data.get('username', 'Administrator'), \
-                        password=login_data.get('password', None), \
-                        url=login_data.get('url', None), \
+                    rmc_client = RmcClient(
+                        username=login_data.get('username', 'Administrator'),
+                        password=login_data.get('password', None),
+                        url=login_data.get('url', None),
                         sessionkey=login_data.get('session_key', None))
 
-                    rmc_client._rest_client.set_authorization_key(\
+                    rmc_client._rest_client.set_authorization_key(
                                             login_data.get('authorization_key'))
-                    rmc_client._rest_client.set_session_key(\
+                    rmc_client._rest_client.set_session_key(
                                                 login_data.get('session_key'))
-                    rmc_client._rest_client.set_session_location(\
+                    rmc_client._rest_client.set_session_location(
                                             login_data.get('session_location'))
 
                     if 'selector' in client:
@@ -617,12 +620,12 @@ class RmcFileCacheManager(RmcCacheManager):
                     rmc_client._get_cache = dict()
 
                     for key in list(getdata.keys()):
-                        restreq = redfish.rest.v1.RestRequest(\
+                        restreq = redfish.rest.v1.RestRequest(
                                                         method='GET', path=key)
 
                         getdata[key]['restreq'] = restreq
-                        rmc_client._get_cache[key] = (\
-                                  redfish.rest.v1.StaticRestResponse(\
+                        rmc_client._get_cache[key] = (
+                                  redfish.rest.v1.StaticRestResponse(
                                                                 **getdata[key]))
 
                     rmc_client._monolith = RisMonolith(rmc_client)
@@ -666,22 +669,21 @@ class RmcFileCacheManager(RmcCacheManager):
 
         if self._rmc._rmc_clients:
             for client in self._rmc._rmc_clients:
-                login_data = dict(\
-                    username=client.get_username(), \
-                    password=client.get_password(), url=client.get_base_url(), \
-                    session_key=client.get_session_key(), \
-                    session_location=client.get_session_location(), \
+                login_data = dict(
+                    username=client.get_username(),
+                    password=client.get_password(), url=client.get_base_url(),
+                    session_key=client.get_session_key(),
+                    session_location=client.get_session_location(),
                     authorization_key=client.get_authorization_key())
 
-                clients_cache.append(\
-                    dict(selector=client.selector, login=login_data, \
-                         filter_attr=client._filter_attr, \
-                         filter_value=client._filter_value, \
+                clients_cache.append(
+                    dict(selector=client.selector, login=login_data,
+                         filter_attr=client._filter_attr,
+                         filter_value=client._filter_value,
                          monolith=client.monolith, get=client._get_cache))
 
-                clientsfh = open('%s/%s' % (cachedir, \
+                clientsfh = open('%s/%s' % (cachedir,
                                          index_map[client.get_base_url()]), 'w')
 
                 json.dump(clients_cache, clientsfh, indent=2, cls=JSONEncoder)
                 clientsfh.close()
-

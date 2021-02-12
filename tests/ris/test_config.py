@@ -1,14 +1,14 @@
+# Copyright Notice:
+# Copyright 2016-2021 DMTF. All rights reserved.
+# License: BSD 3-Clause License. For full text see link:
+# https://github.com/DMTF/python-redfish-library/blob/master/LICENSE.md
+
 # -*- encoding: utf-8 -*-
-import os
-import shutil
-import sys
 import tempfile
 import textwrap
 import unittest
 
 from redfish.ris.config import AutoConfigParser
-
-py2k = sys.version_info < (3, 0)
 
 
 CONFIG = textwrap.dedent(
@@ -33,42 +33,23 @@ class TestAutoConfigParser(unittest.TestCase):
     def test_init(self):
         acp = AutoConfigParser()
         self.assertEqual(acp._configfile, None)
-        if py2k:
-            tmpdirname = tempfile.mkdtemp()
+        with tempfile.TemporaryDirectory() as tmpdirname:
             cfgfile = "{tmpdir}/config.ini".format(tmpdir=tmpdirname)
             with open(cfgfile, "w+") as config:
                 config.write(CONFIG)
             acp = AutoConfigParser(cfgfile)
             self.assertEqual(acp._configfile, cfgfile)
-            shutil.rmtree(tmpdirname)
-        else:
-            with tempfile.TemporaryDirectory() as tmpdirname:
-                cfgfile = "{tmpdir}/config.ini".format(tmpdir=tmpdirname)
-                with open(cfgfile, "w+") as config:
-                    config.write(CONFIG)
-                acp = AutoConfigParser(cfgfile)
-                self.assertEqual(acp._configfile, cfgfile)
 
     def test_load(self):
-        if py2k:
-            tmpdirname = tempfile.mkdtemp()
+        with tempfile.TemporaryDirectory() as tmpdirname:
             cfgfile = "{tmpdir}/config.ini".format(tmpdir=tmpdirname)
             with open(cfgfile, "w+") as config:
                 config.write(CONFIG)
             acp = AutoConfigParser()
             acp.load(cfgfile)
-            shutil.rmtree(tmpdirname)
-        else:
-            with tempfile.TemporaryDirectory() as tmpdirname:
-                cfgfile = "{tmpdir}/config.ini".format(tmpdir=tmpdirname)
-                with open(cfgfile, "w+") as config:
-                    config.write(CONFIG)
-                acp = AutoConfigParser()
-                acp.load(cfgfile)
 
     def test_save(self):
-        if py2k:
-            tmpdirname = tempfile.mkdtemp()
+        with tempfile.TemporaryDirectory() as tmpdirname:
             cfgfile = "{tmpdir}/config.ini".format(tmpdir=tmpdirname)
             with open(cfgfile, "w+") as config:
                 config.write(CONFIG)
@@ -77,14 +58,3 @@ class TestAutoConfigParser(unittest.TestCase):
             acp.save()
             dump = "{tmpdir}/config2.ini".format(tmpdir=tmpdirname)
             acp.save(dump)
-            shutil.rmtree(tmpdirname)
-        else:
-            with tempfile.TemporaryDirectory() as tmpdirname:
-                cfgfile = "{tmpdir}/config.ini".format(tmpdir=tmpdirname)
-                with open(cfgfile, "w+") as config:
-                    config.write(CONFIG)
-                acp = AutoConfigParser(cfgfile)
-                acp.load()
-                acp.save()
-                dump = "{tmpdir}/config2.ini".format(tmpdir=tmpdirname)
-                acp.save(dump)

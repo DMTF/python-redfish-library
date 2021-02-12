@@ -1,6 +1,7 @@
 # Copyright Notice:
-# Copyright 2016-2019 DMTF. All rights reserved.
-# License: BSD 3-Clause License. For full text see link: https://github.com/DMTF/python-redfish-library/blob/master/LICENSE.md
+# Copyright 2016-2021 DMTF. All rights reserved.
+# License: BSD 3-Clause License. For full text see link:
+# https://github.com/DMTF/python-redfish-library/blob/master/LICENSE.md
 
 # -*- coding: utf-8 -*-
 """Helper module for working with REST technology."""
@@ -14,19 +15,15 @@ import time
 import gzip
 import json
 import base64
-import urllib
 import logging
 import inspect
+import http.client
 
 from collections import (OrderedDict)
 
-import six
-from six.moves.urllib.parse import urlparse, urlencode, urlunparse
-from six.moves import http_client
-from six import raise_from
-from six import string_types
-from six import StringIO
-from six import BytesIO
+from urllib.parse import urlparse, urlencode, quote
+from io import StringIO
+from io import BytesIO
 
 #---------End of imports---------
 
@@ -313,7 +310,7 @@ class RestResponse(object):
             headerstr += '%s %s\n' % (header[0], header[1])
 
         return "%(status)s\n%(headerstr)s\n\n%(body)s" % \
-                            {'status': self.status, 'headerstr': headerstr, \
+                            {'status': self.status, 'headerstr': headerstr,
                              'body': self.text}
 
 class JSONEncoder(json.JSONEncoder):
@@ -381,7 +378,7 @@ class StaticRestResponse(RestResponse):
         if 'Content' in kwargs:
             content = kwargs['Content']
 
-            if isinstance(content, string_types):
+            if isinstance(content, str):
                 self._read = content
             else:
                 self._read = json.dumps(content)
@@ -469,14 +466,14 @@ class RestClientBase(object):
         """
         proxy = None
         if url.scheme.upper() == "HTTPS":
-            connection = http_client.HTTPSConnection
+            connection = http.client.HTTPSConnection
             if 'HTTPS_PROXY' in os.environ:
                 host = urlparse(os.environ['HTTPS_PROXY']).netloc
                 proxy = url.netloc
             else:
                 host = url.netloc
         else:
-            connection = http_client.HTTPConnection
+            connection = http.client.HTTPConnection
             if 'HTTP_PROXY' in os.environ:
                 host = urlparse(os.environ['HTTP_PROXY']).netloc
                 proxy = url.netloc
@@ -500,7 +497,7 @@ class RestClientBase(object):
 
         url = url if url else self.__url
         if url.scheme.upper() == "HTTPS":
-            if sys.version_info < (2, 7, 9) and "context" not in inspect.getargspec(http_client.HTTPSConnection.__init__).args:
+            if sys.version_info < (2, 7, 9) and "context" not in inspect.getargspec(http.client.HTTPSConnection.__init__).args:
                 self._conn = self._get_connection(url, timeout=self._timeout)
             else:
                 if self.cafile or self.capath is not None:
@@ -639,14 +636,16 @@ class RestClientBase(object):
         """Perform a GET request
 
         :param path: the URL path.
-        :param path: str.
-        :params args: the arguments to get.
-        :params args: dict.
+        :type path: str.
+        :param args: the arguments to get.
+        :type args: dict.
+        :param headers: dict of headers to be appended.
+        :type headers: dict.
         :returns: returns a rest request with method 'Get'
 
         """
         try:
-            return self._rest_request(path, method='GET', args=args, \
+            return self._rest_request(path, method='GET', args=args,
                                                                 headers=headers)
         except ValueError:
             LOGGER.debug("Error in json object getting path: %s" % path)
@@ -656,22 +655,24 @@ class RestClientBase(object):
         """Perform a HEAD request
 
         :param path: the URL path.
-        :param path: str.
-        :params args: the arguments to get.
-        :params args: dict.
+        :type path: str.
+        :param args: the arguments to get.
+        :type args: dict.
+        :param headers: dict of headers to be appended.
+        :type headers: dict.
         :returns: returns a rest request with method 'Head'
 
         """
-        return self._rest_request(path, method='HEAD', args=args, \
+        return self._rest_request(path, method='HEAD', args=args,
                                                                 headers=headers)
 
     def post(self, path, args=None, body=None, headers=None):
         """Perform a POST request
 
         :param path: the URL path.
-        :param path: str.
-        :params args: the arguments to post.
-        :params args: dict.
+        :type path: str.
+        :param args: the arguments to post.
+        :type args: dict.
         :param body: the body to the sent.
         :type body: str.
         :param headers: dict of headers to be appended.
@@ -679,7 +680,7 @@ class RestClientBase(object):
         :returns: returns a rest request with method 'Post'
 
         """
-        return self._rest_request(path, method='POST', args=args, body=body, \
+        return self._rest_request(path, method='POST', args=args, body=body,
                                                                 headers=headers)
 
     def put(self, path, args=None, body=None, headers=None):
@@ -696,7 +697,7 @@ class RestClientBase(object):
         :returns: returns a rest request with method 'Put'
 
         """
-        return self._rest_request(path, method='PUT', args=args, body=body, \
+        return self._rest_request(path, method='PUT', args=args, body=body,
                                                                 headers=headers)
 
     def patch(self, path, args=None, body=None, headers=None):
@@ -713,7 +714,7 @@ class RestClientBase(object):
         :returns: returns a rest request with method 'Patch'
 
         """
-        return self._rest_request(path, method='PATCH', args=args, body=body, \
+        return self._rest_request(path, method='PATCH', args=args, body=body,
                                                                 headers=headers)
 
     def delete(self, path, args=None, headers=None):
@@ -728,7 +729,7 @@ class RestClientBase(object):
         :returns: returns a rest request with method 'Delete'
 
         """
-        return self._rest_request(path, method='DELETE', args=args, \
+        return self._rest_request(path, method='DELETE', args=args,
                                                                 headers=headers)
 
     def _get_req_headers(self, headers=None):
@@ -754,7 +755,7 @@ class RestClientBase(object):
 
         return headers
 
-    def _rest_request(self, path, method='GET', args=None, body=None, \
+    def _rest_request(self, path, method='GET', args=None, body=None,
                                                                 headers=None):
         """Rest request main function
 
@@ -811,7 +812,20 @@ class RestClientBase(object):
 
         if args:
             if method == 'GET':
-                reqpath += '?' + urlencode(args)
+                # Workaround for this bug: https://bugs.python.org/issue18857
+                none_list = []
+                args_copy = {}
+                for query in args:
+                    if args[query] is None:
+                        none_list.append(query)
+                    else:
+                        args_copy[query] = args[query]
+                reqpath += '?' + urlencode(args_copy, quote_via=quote)
+                for query in none_list:
+                    if reqpath[-1] == '?':
+                        reqpath += query
+                    else:
+                        reqpath += '&' + query
             elif method == 'PUT' or method == 'POST' or method == 'PATCH':
                 LOGGER.warning('For POST, PUT and PATCH methods, the provided "args" parameter "{}" is ignored.'
                                .format(args))
@@ -845,7 +859,7 @@ class RestClientBase(object):
                     if self._conn is None:
                         self.__init_connection()
 
-                    self._conn.request(method.upper(), reqpath, body=body, \
+                    self._conn.request(method.upper(), reqpath, body=body,
                                                                 headers=headers)
                     self._conn_count += 1
 
@@ -888,7 +902,7 @@ class RestClientBase(object):
                         decompressedfile = gzip.GzipFile(fileobj=compressedfile)
                         restresp.text = decompressedfile.read().decode("utf-8")
                 except Exception as excp:
-                    LOGGER.error('Error occur while decompressing body: %s', \
+                    LOGGER.error('Error occur while decompressing body: %s',
                                                                         excp)
                     raise DecompressResponseError()
             except Exception as excp:
@@ -921,13 +935,13 @@ class RestClientBase(object):
                                 restresp._http_response.reason,
                                 headerstr, restresp.request.path, restresp.read))
                     except:
-                        LOGGER.debug('HTTP RESPONSE:\nCode:%s', (restresp))
+                        LOGGER.debug('HTTP RESPONSE:\nCode:%s', restresp)
                 else:
                     LOGGER.debug('HTTP RESPONSE: <No HTTP Response obtained>')
 
             return restresp
         else:
-            raise_from(RetriesExhaustedError(), cause_exception)
+            raise RetriesExhaustedError() from cause_exception
 
     def login(self, username=None, password=None, auth=AuthMethod.SESSION):
         """Login and start a REST session.  Remember to call logout() when"""
@@ -946,14 +960,14 @@ class RestClientBase(object):
         self.__password = password if password else self.__password
 
         if auth == AuthMethod.BASIC:
-            auth_key = base64.b64encode(('%s:%s' % (self.__username, \
+            auth_key = base64.b64encode(('%s:%s' % (self.__username,
                             self.__password)).encode('utf-8')).decode('utf-8')
             self.__authorization_key = 'Basic %s' % auth_key
 
             headers = dict()
             headers['Authorization'] = self.__authorization_key
 
-            respvalidate = self._rest_request('%s%s' % (self.__url.path, \
+            respvalidate = self._rest_request('%s%s' % (self.__url.path,
                                             self.login_url), headers=headers)
 
             if respvalidate.status == 401:
@@ -966,7 +980,7 @@ class RestClientBase(object):
             data['Password'] = self.__password
 
             headers = dict()
-            resp = self._rest_request(self.login_url, method="POST", \
+            resp = self._rest_request(self.login_url, method="POST",
                                                     body=data, headers=headers)
 
             LOGGER.info(json.loads('%s' % resp.text))
@@ -1004,10 +1018,10 @@ class RestClientBase(object):
 
 class HttpClient(RestClientBase):
     """A client for Rest"""
-    def __init__(self, base_url, username=None, password=None, \
-                                default_prefix='/redfish/v1/', \
-                                sessionkey=None, capath=None, \
-                                cafile=None, timeout=None, \
+    def __init__(self, base_url, username=None, password=None,
+                                default_prefix='/redfish/v1/',
+                                sessionkey=None, capath=None,
+                                cafile=None, timeout=None,
                                 max_retry=None):
         """Initialize HttpClient
 
@@ -1031,10 +1045,10 @@ class HttpClient(RestClientBase):
         :type max_retry: int
 
         """
-        super(HttpClient, self).__init__(base_url, username=username, \
-                            password=password, default_prefix=default_prefix, \
-                            sessionkey=sessionkey, capath=capath, \
-                            cafile=cafile, timeout=timeout, \
+        super(HttpClient, self).__init__(base_url, username=username,
+                            password=password, default_prefix=default_prefix,
+                            sessionkey=sessionkey, capath=capath,
+                            cafile=cafile, timeout=timeout,
                             max_retry=max_retry)
 
         try:
@@ -1067,7 +1081,7 @@ class HttpClient(RestClientBase):
         else:
             pass
 
-        return super(HttpClient, self)._rest_request(path=path, method=method, \
+        return super(HttpClient, self)._rest_request(path=path, method=method,
                                          args=args, body=body, headers=headers)
 
     def _get_req_headers(self, headers=None, providerheader=None):
@@ -1085,10 +1099,10 @@ class HttpClient(RestClientBase):
 
         return headers
 
-def redfish_client(base_url=None, username=None, password=None, \
-                                default_prefix='/redfish/v1/', \
-                                sessionkey=None, capath=None, \
-                                cafile=None, timeout=None, \
+def redfish_client(base_url=None, username=None, password=None,
+                                default_prefix='/redfish/v1/',
+                                sessionkey=None, capath=None,
+                                cafile=None, timeout=None,
                                 max_retry=None):
     """Create and return appropriate REDFISH client instance."""
     """ Instantiates appropriate Redfish object based on existing"""
@@ -1115,7 +1129,7 @@ def redfish_client(base_url=None, username=None, password=None, \
     :returns: a client object.
 
     """
-    return HttpClient(base_url=base_url, username=username, password=password, \
-                        default_prefix=default_prefix, sessionkey=sessionkey, \
-                        capath=capath, cafile=cafile, timeout=timeout, \
+    return HttpClient(base_url=base_url, username=username, password=password,
+                        default_prefix=default_prefix, sessionkey=sessionkey,
+                        capath=capath, cafile=cafile, timeout=timeout,
                         max_retry=max_retry)

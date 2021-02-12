@@ -17,6 +17,7 @@ import base64
 import urllib
 import logging
 import inspect
+import re
 
 from collections import (OrderedDict)
 
@@ -457,7 +458,32 @@ class RestClientBase(object):
         self.__destroy_connection()
 
     @staticmethod
-    def _get_connection(url, **kwargs):
+    def _bypass_proxy(host):
+        """
+        Read NO_PROXY environment variable to determine if proxy should be
+        bypassed for host.
+
+        :param host: the host to check
+        :return: True is proxy should be bypassed, False otherwise
+        """
+        if 'NO_PROXY' in os.environ:
+            no_proxy = os.environ['NO_PROXY']
+            if no_proxy == '*':
+                return True
+            hostonly = host.rsplit(':', 1)[0]  # without port
+            no_proxy_list = [proxy.strip() for proxy in no_proxy.split(',')]
+            for name in no_proxy_list:
+                if name:
+                    name = name.lstrip('.')  # ignore leading dots
+                    name = re.escape(name)
+                    pattern = r'(.+\.)?%s$' % name
+                    if (re.match(pattern, hostonly, re.I)
+                            or re.match(pattern, host, re.I)):
+                        print('returning true (re)')
+                        return True
+        return False
+
+    def _get_connection(self, url, **kwargs):
         """
         Wrapper function for the HTTPSConnection/HTTPConnection constructor
         that handles proxies set by the HTTPS_PROXY and HTTP_PROXY environment
@@ -467,17 +493,18 @@ class RestClientBase(object):
         :param kwargs: keyword arguments for the connection constructor
         :return: the connection
         """
+        bypass_proxy = self._bypass_proxy(url.netloc)
         proxy = None
         if url.scheme.upper() == "HTTPS":
             connection = http_client.HTTPSConnection
-            if 'HTTPS_PROXY' in os.environ:
+            if not bypass_proxy and 'HTTPS_PROXY' in os.environ:
                 host = urlparse(os.environ['HTTPS_PROXY']).netloc
                 proxy = url.netloc
             else:
                 host = url.netloc
         else:
             connection = http_client.HTTPConnection
-            if 'HTTP_PROXY' in os.environ:
+            if not bypass_proxy and 'HTTP_PROXY' in os.environ:
                 host = urlparse(os.environ['HTTP_PROXY']).netloc
                 proxy = url.netloc
             else:

@@ -16,7 +16,6 @@ import gzip
 import json
 import base64
 import logging
-import inspect
 import http.client
 
 from collections import (OrderedDict)
@@ -26,13 +25,6 @@ from io import StringIO
 from io import BytesIO
 
 #---------End of imports---------
-
-#---------Python 3 support---------
-
-if sys.version_info > (3,):
-    buffer = memoryview
-
-#---------End of Python 3 support---------
 
 #---------Debug logger---------
 
@@ -497,17 +489,13 @@ class RestClientBase(object):
 
         url = url if url else self.__url
         if url.scheme.upper() == "HTTPS":
-            if sys.version_info < (2, 7, 9) and "context" not in inspect.getargspec(http.client.HTTPSConnection.__init__).args:
-                self._conn = self._get_connection(url, timeout=self._timeout)
+            if self.cafile or self.capath is not None:
+                ssl_context = ssl.create_default_context(capath=self.capath,
+                                                         cafile=self.cafile)
             else:
-                if self.cafile or self.capath is not None:
-                    ssl_context = ssl.create_default_context(
-                        capath=self.capath, cafile=self.cafile)
-                else:
-                    ssl_context = ssl._create_unverified_context()
-                self._conn = self._get_connection(url,
-                                                  context=ssl_context,
-                                                  timeout=self._timeout)
+                ssl_context = ssl._create_unverified_context()
+            self._conn = self._get_connection(url, context=ssl_context,
+                                              timeout=self._timeout)
         elif url.scheme.upper() == "HTTP":
             self._conn = self._get_connection(url, timeout=self._timeout)
         else:
@@ -802,7 +790,7 @@ class RestClientBase(object):
                         compresseddata = buf.getvalue()
                         if compresseddata:
                             data = bytearray()
-                            data.extend(buffer(compresseddata))
+                            data.extend(memoryview(compresseddata))
                             body = data
                 except BaseException as excp:
                     LOGGER.error('Error occur while compressing body: %s', excp)

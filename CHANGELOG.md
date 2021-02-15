@@ -1,5 +1,8 @@
 # Change Log
 
+## [2.2.0] - 2021-02-15
+- Added support for `NO_PROXY` environment variable
+
 ## [2.1.9] - 2020-12-04
 - Added handling for HTTP 303 responses as part of redirect handling
 

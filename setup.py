@@ -7,7 +7,7 @@ with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
     long_description = f.read()
 
 setup(name='redfish',
-      version='2.1.9',
+      version='2.2.0',
       description='Redfish Python Library',
       long_description=long_description,
       long_description_content_type='text/x-rst',

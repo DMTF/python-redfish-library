@@ -1,6 +1,7 @@
 # Copyright Notice:
-# Copyright 2016-2019 DMTF. All rights reserved.
-# License: BSD 3-Clause License. For full text see link: https://github.com/DMTF/python-redfish-library/blob/master/LICENSE.md
+# Copyright 2016-2021 DMTF. All rights reserved.
+# License: BSD 3-Clause License. For full text see link:
+# https://github.com/DMTF/python-redfish-library/blob/master/LICENSE.md
 
 # -*- coding: utf-8 -*-
 """ Shared types used in this module """
@@ -38,6 +39,6 @@ class Dictable(object):
     """A base class which adds the to_dict method used during json encoding"""
     def to_dict(self):
         """Overridable funciton"""
-        raise RuntimeError("You must override this method in your derived" \
+        raise RuntimeError("You must override this method in your derived"
                                                                     " class")
 

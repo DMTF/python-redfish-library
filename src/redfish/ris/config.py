@@ -1,6 +1,7 @@
 # Copyright Notice:
-# Copyright 2016-2019 DMTF. All rights reserved.
-# License: BSD 3-Clause License. For full text see link: https://github.com/DMTF/python-redfish-library/blob/master/LICENSE.md
+# Copyright 2016-2021 DMTF. All rights reserved.
+# License: BSD 3-Clause License. For full text see link:
+# https://github.com/DMTF/python-redfish-library/blob/master/LICENSE.md
 
 # -*- coding: utf-8 -*-
 """Module for working with global configuration options."""
@@ -10,8 +11,7 @@
 import os
 import re
 import logging
-import six
-from six.moves import configparser
+import configparser
 
 #---------End of imports---------
 
@@ -41,7 +41,7 @@ class AutoConfigParser(object):
     def _get_ac_keys(self):
         """Retrieve parse option keys"""
         result = []
-        for key in six.iterkeys(self.__dict__):
+        for key in self.__dict__:
             match = AutoConfigParser._config_pattern.search(key)
             if match:
                 result.append(match.group('confkey'))
@@ -98,7 +98,7 @@ class AutoConfigParser(object):
                 except configparser.NoOptionError:
                     # also try with - instead of _
                     try:
-                        configval = config.get(self._sectionname, \
+                        configval = config.get(self._sectionname,
                                                         key.replace('_', '-'))
                     except configparser.NoOptionError:
                         pass

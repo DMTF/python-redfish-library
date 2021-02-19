@@ -1,6 +1,7 @@
 # Copyright Notice:
-# Copyright 2016-2019 DMTF. All rights reserved.
-# License: BSD 3-Clause License. For full text see link: https://github.com/DMTF/python-redfish-library/blob/master/LICENSE.md
+# Copyright 2016-2021 DMTF. All rights reserved.
+# License: BSD 3-Clause License. For full text see link:
+# https://github.com/DMTF/python-redfish-library/blob/master/LICENSE.md
 
 import os
 import sys
@@ -10,7 +11,7 @@ import logging
 from redfish import redfish_logger
 from redfish.ris import RmcApp, JSONEncoder
 
-#Config logger used by Restful library
+# Config logger used by Restful library
 LOGGERFILE = "RedfishApiExamples.log"
 LOGGERFORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 LOGGER = redfish_logger(LOGGERFILE, LOGGERFORMAT, logging.ERROR)

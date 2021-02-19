@@ -4,15 +4,15 @@ python-redfish-library
 .. image:: https://travis-ci.org/DMTF/python-redfish-library.svg?branch=master
     :target: https://travis-ci.org/DMTF/python-redfish-library
 .. image:: https://img.shields.io/pypi/v/redfish.svg?maxAge=2592000
-	:target: https://pypi.python.org/pypi/redfish
+    :target: https://pypi.python.org/pypi/redfish
 .. image:: https://img.shields.io/github/release/DMTF/python-redfish-library.svg?maxAge=2592000
-	:target: https://github.com/DMTF/python-redfish-library/releases
+    :target: https://github.com/DMTF/python-redfish-library/releases
 .. image:: https://img.shields.io/badge/License-BSD%203--Clause-blue.svg
-	:target: https://raw.githubusercontent.com/DMTF/python-redfish-library/master/LICENSE
+    :target: https://raw.githubusercontent.com/DMTF/python-redfish-library/master/LICENSE
 .. image:: https://img.shields.io/pypi/pyversions/redfish.svg?maxAge=2592000
-	:target: https://pypi.python.org/pypi/redfish
+    :target: https://pypi.python.org/pypi/redfish
 .. image:: https://api.codacy.com/project/badge/Grade/1283adc3972d42b4a3ddb9b96660bc07
-	:target: https://www.codacy.com/app/rexysmydog/python-redfish-library?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=DMTF/python-redfish-library&amp;utm_campaign=Badge_Grade
+    :target: https://www.codacy.com/app/rexysmydog/python-redfish-library?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=DMTF/python-redfish-library&amp;utm_campaign=Badge_Grade
 
 
 .. contents:: :depth: 1
@@ -20,6 +20,8 @@ python-redfish-library
 
 Description
 -----------
+
+As of version 3.0.0, Python2 is no longer supported.  If Python2 is required, ``redfish<3.0.0`` can be specified in a requirements file.
 
 REST (Representational State Transfer) is a web based software architectural style consisting of a set of constraints that focuses on a system's resources. The Redfish library performs the basic HTTPS operations GET, POST, PUT, PATCH and DELETE on resources using the HATEOAS (Hypermedia as the Engine of Application State) Redfish architecture. API clients allow you to manage and interact with the system through a fixed URL and several URIs. Go to the `wiki <../../wiki>`_ for more details.
 
@@ -29,7 +31,7 @@ Installing
 
 .. code-block:: console
 
-	pip install redfish
+    pip install redfish
 
 
 Building from zip file source
@@ -37,9 +39,9 @@ Building from zip file source
 
 .. code-block:: console
 
-	python setup.py sdist --formats=zip (this will produce a .zip file)
-	cd dist
-	pip install redfish-x.x.x.zip
+    python setup.py sdist --formats=zip (this will produce a .zip file)
+    cd dist
+    pip install redfish-x.x.x.zip
 
 
 Requirements
@@ -63,7 +65,7 @@ For Redfish compliant application:
 
 .. code-block:: python
 
-	import redfish
+    import redfish
 
 
 Create a Redfish Object
@@ -75,7 +77,7 @@ To crete a Redfish Object, call the redfish_client method:
 
 .. code-block:: python
 
-	REDFISH_OBJ = redfish.redfish_client(base_url=login_host, username=login_account, \
+    REDFISH_OBJ = redfish.redfish_client(base_url=login_host, username=login_account, \
                           password=login_password, default_prefix='/redfish/v1')
 
 
@@ -86,7 +88,7 @@ The login operation is performed when creating the REDFISH_OBJ. You can continue
 
 .. code-block:: python
 
-	REDFISH_OBJ.login(auth="session")
+    REDFISH_OBJ.login(auth="session")
 
 
 Perform a GET operation
@@ -97,7 +99,7 @@ An example of rawget operation on the path "/redfish/v1/systems/1" is shown belo
 
 .. code-block:: python
 
-	response = REDFISH_OBJ.get("/redfish/v1/systems/1", None)
+    response = REDFISH_OBJ.get("/redfish/v1/systems/1", None)
 
 
 Perform a POST operation
@@ -108,8 +110,8 @@ An example of a POST operation on the path "/redfish/v1/systems/1/Actions/Comput
 
 .. code-block:: python
 
-	body = {"ResetType": "GracefulShutdown"}
-	response = REDFISH_OBJ.post("/redfish/v1/systems/1/Actions/ComputerSystem.Reset", body=body)
+    body = {"ResetType": "GracefulShutdown"}
+    response = REDFISH_OBJ.post("/redfish/v1/systems/1/Actions/ComputerSystem.Reset", body=body)
 
 
 Working with Tasks
@@ -121,8 +123,8 @@ An example of a POST operation with a possible Task is shown below.
 
 .. code-block:: python
 
-	body = {"ResetType": "GracefulShutdown"}
-	response = REDFISH_OBJ.post("/redfish/v1/systems/1/Actions/ComputerSystem.Reset", body=body)
+    body = {"ResetType": "GracefulShutdown"}
+    response = REDFISH_OBJ.post("/redfish/v1/systems/1/Actions/ComputerSystem.Reset", body=body)
     if(response.is_processing):
         task = response.monitor(context)
 
@@ -140,7 +142,7 @@ Make sure you logout every session you create as it will remain alive until it t
 
 .. code-block:: python
 
-	REDFISH_OBJ.logout()
+    REDFISH_OBJ.logout()
 
 
 A logout deletes the current sesssion from the system. The redfish_client object destructor includes a logout statement.
@@ -168,16 +170,18 @@ Contributing
 Release Process
 ---------------
 
-1. Update `CHANGELOG.md` with the list of changes since the last release
-2. Update the ``__version__`` variable in ``src/redfish/__init__.py``, and ``setup.py`` to reflect the new library version
-3. Push changes to Github
-4. Create a new release in Github
-5. Push the new library version to pypi.org: ``python setup.py sdist && twine upload dist/*``
+Run the `release.sh` script to publish a new version.
 
+.. code-block:: shell
+
+    sh release.sh <NewVersion>
+
+
+Enter the release notes when prompted; an empty line signifies no more notes to add.
 
 Copyright and License
 ---------------------
 
 Copyright Notice:
-Copyright 2016-2019 DMTF. All rights reserved.
+Copyright 2016-2021 DMTF. All rights reserved.
 License: BSD 3-Clause License. For full text see link: `https://github.com/DMTF/python-redfish-library/blob/master/LICENSE.md <https://github.com/DMTF/python-redfish-library/blob/master/LICENSE.md>`_

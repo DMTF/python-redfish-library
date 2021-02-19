@@ -1,16 +1,16 @@
 # Copyright Notice:
-# Copyright 2016-2019 DMTF. All rights reserved.
+# Copyright 2016-2021 DMTF. All rights reserved.
 # License: BSD 3-Clause License. For full text see link:
 # https://github.com/DMTF/python-redfish-library/blob/master/LICENSE.md
 
 # -*- coding: utf-8 -*-
 """Discovers Redfish services"""
 
+import http.client
 import re
 import socket
 
-from six import BytesIO
-from six.moves import http_client
+from io import BytesIO
 
 
 class FakeSocket:
@@ -26,6 +26,7 @@ class FakeSocket:
 def sanitize(number, minimum, maximum=None):
     """ Sanity check a given number.
 
+    :param number: the number to check
     :param minimum: the minimum acceptable number
     :param maximum: the maximum acceptable number (optional)
 
@@ -101,7 +102,7 @@ def discover_ssdp(port=1900, ttl=2, response_time=3, iface=None, protocol="ipv4"
         "^uuid:([a-f0-9\-]*)::urn:dmtf-org:service:redfish-rest:1(:\d)?$") # noqa
     while True:
         try:
-            response = http_client.HTTPResponse(FakeSocket(sock.recv(1024)))
+            response = http.client.HTTPResponse(FakeSocket(sock.recv(1024)))
             response.begin()
             uuid_search = pattern.search(response.getheader("USN").lower())
             if uuid_search:

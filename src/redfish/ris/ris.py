@@ -1,5 +1,5 @@
 # Copyright Notice:
-# Copyright 2016-2019 DMTF. All rights reserved.
+# Copyright 2016-2021 DMTF. All rights reserved.
 # License: BSD 3-Clause License. For full text see link:
 # https://github.com/DMTF/python-redfish-library/blob/master/LICENSE.md
 
@@ -12,6 +12,7 @@ import abc
 import logging
 import sys
 import threading
+from queue import Queue
 from collections import OrderedDict
 
 import jsonpath_rw
@@ -19,10 +20,8 @@ import jsonpath_rw
 import redfish.rest.v1
 from redfish.ris.sharedtypes import Dictable
 
-import six
-from six.moves.queue import Queue
-from six.moves.urllib.parse import urlparse
-from six.moves.urllib.parse import urlunparse
+from urllib.parse import urlparse, urlunparse
+
 
 # ---------End of imports---------
 
@@ -39,9 +38,9 @@ class SessionExpiredRis(Exception):
     pass
 
 
-@six.add_metaclass(abc.ABCMeta)
 class RisMonolithMemberBase(Dictable):
     """RIS monolith member base class"""
+    __metaclass__ = abc.ABCMeta
 
     pass
 

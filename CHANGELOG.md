@@ -1,5 +1,8 @@
 # Change Log
 
+## [3.0.0] - 2021-02-20
+- Removed Python2 support
+
 ## [2.2.0] - 2021-02-15
 - Added support for `NO_PROXY` environment variable
 

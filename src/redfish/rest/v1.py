@@ -899,7 +899,7 @@ class RestClientBase(object):
                         break
                     newloc = resp.getheader('location')
                     newurl = urlparse(newloc)
-                    if resp.status == 303:
+                    if resp.status == 301 or resp.status == 302 or resp.status == 303:
                         method = 'GET'
                         body = None
                         for h in ['Content-Type', 'Content-Length']:

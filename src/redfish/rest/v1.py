@@ -771,7 +771,7 @@ class RestClientBase(object):
         return headers
 
     def _rest_request(self, path, method='GET', args=None, body=None,
-                                                                headers=None):
+                      headers=None, skip_redirect=False):
         """Rest request main function
 
         :param path: path within tree
@@ -784,6 +784,8 @@ class RestClientBase(object):
         :type body: dict
         :param headers: provide additional headers
         :type headers: dict
+        :param skip_redirect: controls whether redirects are followed
+        :type skip_redirect: bool
         :returns: returns a RestResponse object
 
         """
@@ -895,11 +897,11 @@ class RestClientBase(object):
 
                     # redirect handling
                     if resp.status not in list(range(300, 399)) or \
-                                                            resp.status == 304:
+                       resp.status == 304 or skip_redirect is True:
                         break
                     newloc = resp.getheader('location')
                     newurl = urlparse(newloc)
-                    if resp.status == 301 or resp.status == 302 or resp.status == 303:
+                    if resp.status in [301, 302, 303]:
                         method = 'GET'
                         body = None
                         for h in ['Content-Type', 'Content-Length']:
@@ -995,10 +997,9 @@ class RestClientBase(object):
             data['Password'] = self.__password
 
             headers = dict()
-            resp = self._rest_request(self.login_url, method="POST",
-                                                    body=data, headers=headers)
+            resp = self._rest_request(self.login_url, method="POST",body=data,
+                                      headers=headers, skip_redirect=True)
 
-            LOGGER.info(json.loads('%s' % resp.text))
             LOGGER.info('Login returned code %s: %s', resp.status, resp.text)
 
             self.__session_key = resp.session_key
@@ -1075,7 +1076,7 @@ class HttpClient(RestClientBase):
             self.login_url = '/redfish/v1/SessionService/Sessions'
 
     def _rest_request(self, path='', method="GET", args=None, body=None,
-                                                                headers=None):
+                      headers=None, skip_redirect=False):
         """Rest request for HTTP client
 
         :param path: path within tree
@@ -1088,6 +1089,8 @@ class HttpClient(RestClientBase):
         :type body: dict
         :param headers: provide additional headers
         :type headers: dict
+        :param skip_redirect: controls whether redirects are followed
+        :type skip_redirect: bool
         :returns: returns a rest request
 
         """
@@ -1097,7 +1100,9 @@ class HttpClient(RestClientBase):
             pass
 
         return super(HttpClient, self)._rest_request(path=path, method=method,
-                                         args=args, body=body, headers=headers)
+                                                     args=args, body=body,
+                                                     headers=headers,
+                                                     skip_redirect=skip_redirect)
 
     def _get_req_headers(self, headers=None, providerheader=None):
         """Get the request headers for HTTP client

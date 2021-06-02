@@ -789,7 +789,6 @@ class RestClientBase(object):
         :returns: returns a RestResponse object
 
         """
-        print("_rest_request: {} {}".format(method, path))
         headers = self._get_req_headers(headers)
         reqpath = path.replace('//', '/')
 
@@ -896,14 +895,9 @@ class RestClientBase(object):
                     if resp.getheader('Connection') == 'close':
                         self.__destroy_connection()
 
-                    print("Inside '_rest_request' checking response details")
-                    print(resp.status)
-                    print(resp.msg)
                     # redirect handling
                     if resp.status not in list(range(300, 399)) or \
                        resp.status == 304 or skip_redirect is True:
-                        if skip_redirect is True:
-                            print("Skipping redirects")
                         break
                     newloc = resp.getheader('location')
                     newurl = urlparse(newloc)
@@ -1005,17 +999,11 @@ class RestClientBase(object):
             headers = dict()
             resp = self._rest_request(self.login_url, method="POST",body=data,
                                       headers=headers, skip_redirect=True)
-            print("Inside 'login' after _rest_request")
-            print(resp.status)
-            print(resp.getheaders())
 
             LOGGER.info('Login returned code %s: %s', resp.status, resp.text)
 
             self.__session_key = resp.session_key
             self.__session_location = resp.session_location
-            print("Key {}".format(self.__session_key))
-            print("Location {}".format(self.__session_location))
-            print("Exit 'login'")
 
             if not self.__session_key and resp.status not in [200, 201, 202, 204]:
                 #If your REST client has a delay for fail attempts added it here

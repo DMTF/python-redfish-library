@@ -50,7 +50,7 @@ class DecompressResponseError(Exception):
     pass
 
 class JsonDecodingError(Exception):
-    """Raised when there is an error in json data."""
+    """Raised when the JSON response data is malformed."""
     pass
 
 class BadRequestError(Exception):
@@ -228,7 +228,13 @@ class RestResponse(object):
     @property
     def dict(self):
         """Property for accessing the data as an dict"""
-        return json.loads(self.text)
+        try:
+           return json.loads(self.text)
+        except:
+            str = "Service responded with invalid JSON at URI {}\n{}".format(
+                self._rest_request.path, self.text)
+            LOGGER.error(str)
+            raise JsonDecodingError(str) from None
 
     @property
     def obj(self):
@@ -634,15 +640,14 @@ class RestClientBase(object):
                                                "return code: %d" % resp.status)
 
         content = resp.text
-        root_data = None
 
         try:
-            root_data = json.loads(content, "ISO-8859-1")
-        except TypeError:
             root_data = json.loads(content)
-        except ValueError as excp:
-            LOGGER.error("%s for JSON content %s", excp, content)
-            raise
+        except:
+            str = 'Service responded with invalid JSON at URI {}{}\n{}'.format(
+                self.__url.path, self.default_prefix, content)
+            LOGGER.error(str)
+            raise JsonDecodingError(str) from None
 
         self.root = RisObject.parse(root_data)
         self.root_resp = resp
@@ -663,8 +668,9 @@ class RestClientBase(object):
             return self._rest_request(path, method='GET', args=args,
                                                                 headers=headers)
         except ValueError:
-            LOGGER.debug("Error in json object getting path: %s" % path)
-            raise JsonDecodingError('Error in json decoding.')
+            str = "Service responded with invalid JSON at URI {}".format(path)
+            LOGGER.error(str)
+            raise JsonDecodingError(str) from None
 
     def head(self, path, args=None, headers=None):
         """Perform a HEAD request

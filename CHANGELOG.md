@@ -1,5 +1,10 @@
 # Change Log
 
+## [3.0.1] - 2021-06-04
+- Provided additional handling for HTTP 301 and 302 redirects
+- Changed session creation to not follow redirects in order to ensure the session token and location are not lost
+- Enhanced invalid JSON response handling to better highlight a service error
+
 ## [3.0.0] - 2021-02-20
 - Removed Python2 support
 

@@ -18,6 +18,7 @@ import base64
 import logging
 import http.client
 import re
+import warnings
 
 from collections import (OrderedDict)
 
@@ -1155,6 +1156,9 @@ def redfish_client(base_url=None, username=None, password=None,
     :returns: a client object.
 
     """
+    if "://" not in base_url:
+        warnings.warn("Scheme not specified for '{}'; adding 'https://'".format(base_url))
+        base_url = "https://" + base_url
     return HttpClient(base_url=base_url, username=username, password=password,
                         default_prefix=default_prefix, sessionkey=sessionkey,
                         capath=capath, cafile=cafile, timeout=timeout,

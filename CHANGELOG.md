@@ -1,5 +1,8 @@
 # Change Log
 
+## [3.0.2] - 2021-08-30
+- Added support for prepending 'https://' when the provided URI of the service does not contain a scheme
+
 ## [3.0.1] - 2021-06-04
 - Provided additional handling for HTTP 301 and 302 redirects
 - Changed session creation to not follow redirects in order to ensure the session token and location are not lost

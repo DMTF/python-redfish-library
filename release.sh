@@ -30,7 +30,7 @@ eof
 
 # Commit and push changes
 git add CHANGELOG.md setup.py src/redfish/__init__.py
-git commit -m "$1 versioning"
+git commit -s -m "$1 versioning"
 git push origin master
 
 # Make new release in GitHub

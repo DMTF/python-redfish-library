@@ -803,7 +803,7 @@ class RestClientBase(object):
 
         if body is not None:
             if isinstance(body, dict) or isinstance(body, list):
-                if headers['Content-Type'] == 'multipart/form-data':
+                if headers.get('Content-Type', None) == 'multipart/form-data':
                     # Body contains part values, either as
                     # - dict (where key is part name, and value is string)
                     # - list of tuples (if the order is important)

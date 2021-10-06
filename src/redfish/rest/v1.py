@@ -805,7 +805,7 @@ class RestClientBase(object):
             if isinstance(body, dict) or isinstance(body, list):
                 if headers['Content-Type'] == 'multipart/form-data':
                     # Body contains part values, either as
-                    # - dict (where key is part name)
+                    # - dict (where key is part name, and value is string)
                     # - list of tuples (if the order is important)
                     # - dict (where values are tuples as they would
                     #   be provided to requests' `files` parameter)
@@ -817,25 +817,6 @@ class RestClientBase(object):
                     # (2) UpdateFile (binary file to use for this update)
                     #
                     # The third part is optional: OemXXX
-
-                    # Assuming we receive update parameters as dict
-                    body['UpdateParameters'] = (
-                        None,  # filename must remain empty
-                        json.dumps(body['UpdateParameters']),
-                        'application/json'
-                    )
-
-                    # Assuming we receive tuple of filename and binary contents
-                    # then we still have to add the content type
-                    body['UpdateFile'] = (
-                        body['UpdateFile'][0],  # filename
-                        body['UpdateFile'][1],  # binary file contents
-                        'application/octet-stream'
-                    )
-
-                    # Assume that an optional Oem part is provided as 3-tuple
-                    # where ('name' | None, contents, 'content-type')
-
                     encoder = MultipartEncoder(body)
                     body = encoder.to_string()
 

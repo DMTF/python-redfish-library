@@ -4,6 +4,7 @@
 # https://github.com/DMTF/python-redfish-library/blob/master/LICENSE.md
 
 import sys
+import json
 import redfish
 
 # When running remotely connect using the address, account name, 
@@ -22,8 +23,8 @@ REDFISH_OBJ.login(auth="session")
 # Format parts of the Update
 headers = {'Content-Type': 'multipart/form-data'}
 body = {}
-body['UpdateParameters'] = {'Targets': ['/redfish/v1/Managers/1'], 'Oem': {}}
-body['UpdateFile'] = ('flash.bin', open('flash.bin', 'rb'))
+body['UpdateParameters'] = (None, json.dumps({'Targets': ['/redfish/v1/Managers/1'], 'Oem': {}}), 'application/json')
+body['UpdateFile'] = ('flash.bin', open('flash.bin', 'rb'), 'application/octet-stream')
 
 # The "OemXXX" part is optional in the specification
 # Must be formatted as 3-tuple:

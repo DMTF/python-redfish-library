@@ -31,6 +31,7 @@ setup(name='redfish',
       install_requires=[
           'jsonpath_rw',
           'jsonpointer',
+          'requests_toolbelt',
       ],
       extras_require={
           ':python_version == "3.4"': [

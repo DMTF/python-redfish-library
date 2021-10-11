@@ -26,7 +26,7 @@ from urllib.parse import urlparse, urlencode, quote
 from io import StringIO
 from io import BytesIO
 
-from .multipart_encoder import MultipartEncoder
+from requests_toolbelt import MultipartEncoder
 
 #---------End of imports---------
 

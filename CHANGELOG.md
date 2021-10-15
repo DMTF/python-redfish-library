@@ -1,5 +1,8 @@
 # Change Log
 
+## [3.0.3] - 2021-10-15
+- Added support for performing multi-part HTTP POST requests
+
 ## [3.0.2] - 2021-08-30
 - Added support for prepending 'https://' when the provided URI of the service does not contain a scheme
 

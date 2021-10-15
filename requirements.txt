@@ -2,3 +2,5 @@ jsonpatch<=1.24 ; python_version == '3.4'
 jsonpatch ; python_version >= '3.5'
 jsonpath_rw
 jsonpointer
+urllib3
+requests-toolbelt

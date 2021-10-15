@@ -26,6 +26,8 @@ from urllib.parse import urlparse, urlencode, quote
 from io import StringIO
 from io import BytesIO
 
+from requests_toolbelt import MultipartEncoder
+
 #---------End of imports---------
 
 #---------Debug logger---------
@@ -801,8 +803,31 @@ class RestClientBase(object):
 
         if body is not None:
             if isinstance(body, dict) or isinstance(body, list):
-                headers['Content-Type'] = 'application/json'
-                body = json.dumps(body)
+                if headers.get('Content-Type', None) == 'multipart/form-data':
+                    # Body contains part values, either as
+                    # - dict (where key is part name, and value is string)
+                    # - list of tuples (if the order is important)
+                    # - dict (where values are tuples as they would
+                    #   be provided to requests' `files` parameter)
+                    # See https://toolbelt.readthedocs.io/en/latest/uploading-data.html#requests_toolbelt.multipart.encoder.MultipartEncoder
+                    #
+                    # Redfish specification requires two parts:
+                    # (1) UpdateParameters (JSON formatted,
+                    #     adhering to the UpdateService Schema)
+                    # (2) UpdateFile (binary file to use for this update)
+                    #
+                    # The third part is optional: OemXXX
+                    encoder = MultipartEncoder(body)
+                    body = encoder.to_string()
+
+                    # Overwrite Content-Type, because we have to include
+                    # the boundary that the encoder generated.
+                    # Will be of the form: "multipart/form-data; boundary=abc'
+                    # where the boundary value is a UUID.
+                    headers['Content-Type'] = encoder.content_type
+                else:
+                    headers['Content-Type'] = 'application/json'
+                    body = json.dumps(body)
             elif isinstance(body, bytes):
                 headers['Content-Type'] = 'application/octet-stream'
                 body = body

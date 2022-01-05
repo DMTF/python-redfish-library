@@ -155,13 +155,17 @@ class RestResponse(object):
         :type http_response: requests.Response
 
         """
-        self._read = http_response.text
-        self._status = http_response.status_code
+        self._read = None
+        self._status = None
         self._session_key = None
         self._session_location = None
         self._task_location = None
         self._rest_request = rest_request
         self._http_response = http_response
+
+        if http_response is not None:
+            self._read = http_response.text
+            self._status = http_response.status_code
 
     @property
     def read(self):

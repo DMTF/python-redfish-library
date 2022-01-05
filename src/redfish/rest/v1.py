@@ -8,25 +8,25 @@
 
 #---------Imports---------
 
-import os
 import sys
-import ssl
 import time
 import gzip
 import json
 import base64
 import logging
-import http.client
-import re
 import warnings
+import requests
 
 from collections import (OrderedDict)
 
 from urllib.parse import urlparse, urlencode, quote
 from io import StringIO
-from io import BytesIO
 
 from requests_toolbelt import MultipartEncoder
+
+# Many services come with self-signed certificates and will remain as such; need to suppress warnings for this
+from requests.packages.urllib3.exceptions import InsecureRequestWarning
+requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
 #---------End of imports---------
 
@@ -152,25 +152,22 @@ class RestResponse(object):
         :params rest_request: Holder for request information
         :type rest_request: RestRequest object
         :params http_response: Response from HTTP
-        :type http_response: HTTPResponse
+        :type http_response: requests.Response
 
         """
-        self._read = None
-        self._status = None
+        self._read = http_response.text
+        self._status = http_response.status_code
         self._session_key = None
         self._session_location = None
         self._task_location = None
         self._rest_request = rest_request
         self._http_response = http_response
 
-        if self._http_response:
-            self._read = self._http_response.read()
-        else:
-            self._read = None
-
     @property
     def read(self):
         """Wrapper around httpresponse.read()"""
+
+        # Backwards compatibility: for requests, we can simply use "text"; need to see if there are external dependencies to continue using read
         return self._read
 
     @read.setter
@@ -188,7 +185,12 @@ class RestResponse(object):
 
     def getheaders(self):
         """Property for accessing the headers"""
-        return self._http_response.getheaders()
+
+        # Backwards compatibility: requests simply uses a dictionary, but older versions of this library returned a list of tuples
+        headers = []
+        for header in self._http_response.headers:
+            headers.append((header, self._http_response.headers[header]))
+        return headers
 
     def getheader(self, name):
         """Property for accessing an individual header
@@ -198,7 +200,7 @@ class RestResponse(object):
         :returns: returns a header from HTTP response
 
         """
-        return self._http_response.getheader(name, None)
+        return self._http_response.headers.get(name.lower(), None)
 
     def json(self, newdict):
         """Property for setting JSON data
@@ -212,11 +214,7 @@ class RestResponse(object):
     @property
     def text(self):
         """Property for accessing the data as an unparsed string"""
-        if isinstance(self.read, str):
-            value = self.read
-        else:
-            value = self.read.decode("utf-8", "ignore")
-        return value
+        return self.read
 
     @text.setter
     def text(self, value):
@@ -232,10 +230,10 @@ class RestResponse(object):
     def dict(self):
         """Property for accessing the data as an dict"""
         try:
-           return json.loads(self.text)
+            return json.loads(self.read)
         except:
             str = "Service responded with invalid JSON at URI {}\n{}".format(
-                self._rest_request.path, self.text)
+                self._rest_request.path, self.read)
             LOGGER.error(str)
             raise JsonDecodingError(str) from None
 
@@ -247,10 +245,7 @@ class RestResponse(object):
     @property
     def status(self):
         """Property for accessing the status code"""
-        if self._status:
-            return self._status
-
-        return self._http_response.status
+        return self._status
 
     @property
     def session_key(self):
@@ -258,7 +253,7 @@ class RestResponse(object):
         if self._session_key:
             return self._session_key
 
-        self._session_key = self._http_response.getheader('x-auth-token')
+        self._session_key = self.getheader('x-auth-token')
         return self._session_key
 
     @property
@@ -267,7 +262,7 @@ class RestResponse(object):
         if self._session_location:
             return self._session_location
 
-        self._session_location = self._http_response.getheader('location')
+        self._session_location = self.getheader('location')
         return self._session_location
 
     @property
@@ -276,7 +271,7 @@ class RestResponse(object):
         if self._task_location:
             return self._task_location
 
-        self._task_location = self._http_response.getheader('location')
+        self._task_location = self.getheader('location')
         return self._task_location
 
     @property
@@ -287,7 +282,14 @@ class RestResponse(object):
     @property
     def retry_after(self):
         """Retry After header"""
-        return self._http_response.getheader('retry-after')
+        retry_after = self.getheader('retry-after')
+        if retry_after is not None:
+            # Convert to int for ease of use by callers
+            try:
+                retry_after = int(retry_after)
+            except:
+                retry_after = 5
+        return retry_after
 
     def monitor(self, context):
         """Function to process Task, used on an action or POST/PATCH that returns 202"""
@@ -438,112 +440,17 @@ class RestClientBase(object):
         self.__base_url = base_url.rstrip('/')
         self.__username = username
         self.__password = password
-        self.__url = urlparse(self.__base_url)
         self.__session_key = sessionkey
         self.__authorization_key = None
         self.__session_location = None
-        self._conn = None
-        self._conn_count = 0
+        self._session = requests.Session()
         self._timeout = timeout
         self._max_retry = max_retry if max_retry is not None else 10
         self.login_url = None
         self.default_prefix = default_prefix
         self.capath = capath
         self.cafile = cafile
-
-        self.__init_connection()
         self.get_root_object()
-        self.__destroy_connection()
-
-    @staticmethod
-    def _bypass_proxy(host):
-        """
-        Read NO_PROXY environment variable to determine if proxy should be
-        bypassed for host.
-
-        :param host: the host to check
-        :return: True is proxy should be bypassed, False otherwise
-        """
-        if 'NO_PROXY' in os.environ:
-            no_proxy = os.environ['NO_PROXY']
-            if no_proxy == '*':
-                return True
-            hostonly = host.rsplit(':', 1)[0]  # without port
-            no_proxy_list = [proxy.strip() for proxy in no_proxy.split(',')]
-            for name in no_proxy_list:
-                if name:
-                    name = name.lstrip('.')  # ignore leading dots
-                    name = re.escape(name)
-                    pattern = r'(.+\.)?%s$' % name
-                    if (re.match(pattern, hostonly, re.I)
-                            or re.match(pattern, host, re.I)):
-                        print('returning true (re)')
-                        return True
-        return False
-
-    def _get_connection(self, url, **kwargs):
-        """
-        Wrapper function for the HTTPSConnection/HTTPConnection constructor
-        that handles proxies set by the HTTPS_PROXY and HTTP_PROXY environment
-        variables
-
-        :param url: the target URL
-        :param kwargs: keyword arguments for the connection constructor
-        :return: the connection
-        """
-        bypass_proxy = self._bypass_proxy(url.netloc)
-        proxy = None
-        if url.scheme.upper() == "HTTPS":
-            connection = http.client.HTTPSConnection
-            if not bypass_proxy and 'HTTPS_PROXY' in os.environ:
-                host = urlparse(os.environ['HTTPS_PROXY']).netloc
-                proxy = url.netloc
-            else:
-                host = url.netloc
-        else:
-            connection = http.client.HTTPConnection
-            if not bypass_proxy and 'HTTP_PROXY' in os.environ:
-                host = urlparse(os.environ['HTTP_PROXY']).netloc
-                proxy = url.netloc
-            else:
-                host = url.netloc
-        conn = connection(host, **kwargs)
-        if proxy:
-            LOGGER.debug("Proxy %s connection to %s through %s" % (
-                url.scheme.upper(), proxy, host))
-            conn.set_tunnel(proxy)
-        return conn
-
-    def __init_connection(self, url=None):
-        """Function for initiating connection with remote server
-
-        :param url: The URL of the remote system
-        :type url: str
-
-        """
-        self.__destroy_connection()
-
-        url = url if url else self.__url
-        if url.scheme.upper() == "HTTPS":
-            if self.cafile or self.capath is not None:
-                ssl_context = ssl.create_default_context(capath=self.capath,
-                                                         cafile=self.cafile)
-            else:
-                ssl_context = ssl._create_unverified_context()
-            self._conn = self._get_connection(url, context=ssl_context,
-                                              timeout=self._timeout)
-        elif url.scheme.upper() == "HTTP":
-            self._conn = self._get_connection(url, timeout=self._timeout)
-        else:
-            pass
-
-    def __destroy_connection(self):
-        """Function for closing connection with remote server"""
-        if self._conn:
-            self._conn.close()
-
-        self._conn = None
-        self._conn_count = 0
 
     def __enter__(self):
         self.login()
@@ -551,7 +458,11 @@ class RestClientBase(object):
 
     def __exit__(self, exc_type, exc_value, exc_traceback):
         self.logout()
-        self.__destroy_connection()
+        self._session.close()
+
+    def __del__(self):
+        self.logout()
+        self._session.close()
 
     def get_username(self):
         """Return used user name"""
@@ -634,7 +545,7 @@ class RestClientBase(object):
     def get_root_object(self):
         """Perform an initial get and store the result"""
         try:
-            resp = self.get('%s%s' % (self.__url.path, self.default_prefix))
+            resp = self.get(self.default_prefix)
         except Exception as excp:
             raise excp
 
@@ -647,8 +558,8 @@ class RestClientBase(object):
         try:
             root_data = json.loads(content)
         except:
-            str = 'Service responded with invalid JSON at URI {}{}\n{}'.format(
-                self.__url.path, self.default_prefix, content)
+            str = 'Service responded with invalid JSON at URI {}\n{}'.format(
+                self.default_prefix, content)
             LOGGER.error(str)
             raise JsonDecodingError(str) from None
 
@@ -775,12 +686,10 @@ class RestClientBase(object):
         if 'accept' not in headers_keys:
             headers['Accept'] = '*/*'
 
-        headers['Connection'] = 'Keep-Alive'
-
         return headers
 
     def _rest_request(self, path, method='GET', args=None, body=None,
-                      headers=None, skip_redirect=False):
+                      headers=None, allow_redirects=True):
         """Rest request main function
 
         :param path: path within tree
@@ -793,8 +702,8 @@ class RestClientBase(object):
         :type body: dict
         :param headers: provide additional headers
         :type headers: dict
-        :param skip_redirect: controls whether redirects are followed
-        :type skip_redirect: bool
+        :param allow_redirects: controls whether redirects are followed
+        :type allow_redirects: bool
         :returns: returns a RestResponse object
 
         """
@@ -857,11 +766,10 @@ class RestClientBase(object):
                     LOGGER.error('Error occur while compressing body: %s', excp)
                     raise
 
-            headers['Content-Length'] = len(body)
-
         if args:
             if method == 'GET':
-                # Workaround for this bug: https://bugs.python.org/issue18857
+                # Workaround for this: https://github.com/psf/requests/issues/993
+                # Redfish supports some query parameters without using '=', which is apparently against HTML5
                 none_list = []
                 args_copy = {}
                 for query in args:
@@ -904,66 +812,33 @@ class RestClientBase(object):
             LOGGER.info('Attempt %s of %s', attempts, path)
 
             try:
-                while True:
-                    if self._conn is None:
-                        self.__init_connection()
+                if sys.version_info < (3, 3):
+                    inittime = time.clock()
+                else:
+                    inittime = time.perf_counter()
 
-                    self._conn.request(method.upper(), reqpath, body=body,
-                                                                headers=headers)
-                    self._conn_count += 1
+                # TODO: Migration to requests lost the "CA directory" capability; need to revisit
+                verify = False
+                if self.cafile:
+                    verify = self.cafile
+                resp = self._session.request(method.upper(), "{}{}".format(self.__base_url, reqpath), data=body,
+                                             headers=headers, timeout=self._timeout, allow_redirects=allow_redirects,
+                                             verify=verify)
 
-                    if sys.version_info < (3, 3):
-                        inittime = time.clock()
-                    else:
-                        inittime = time.perf_counter()
-                    resp = self._conn.getresponse()
-                    if sys.version_info < (3, 3):
-                        endtime = time.clock()
-                    else:
-                        endtime = time.perf_counter()
-                    LOGGER.info('Response Time for %s to %s: %s seconds.' %
-                                (method, reqpath, str(endtime-inittime)))
-
-                    if resp.getheader('Connection') == 'close':
-                        self.__destroy_connection()
-
-                    # redirect handling
-                    if resp.status not in list(range(300, 399)) or \
-                       resp.status == 304 or skip_redirect is True:
-                        break
-                    newloc = resp.getheader('location')
-                    newurl = urlparse(newloc)
-                    if resp.status in [301, 302, 303]:
-                        method = 'GET'
-                        body = None
-                        for h in ['Content-Type', 'Content-Length']:
-                            if h in headers:
-                                del headers[h]
-
-                    reqpath = newurl.path
-                    self.__init_connection(newurl)
+                if sys.version_info < (3, 3):
+                    endtime = time.clock()
+                else:
+                    endtime = time.perf_counter()
+                LOGGER.info('Response Time for %s to %s: %s seconds.' %
+                            (method, reqpath, str(endtime-inittime)))
 
                 restresp = RestResponse(restreq, resp)
-
-                try:
-                    if restresp.getheader('content-encoding') == "gzip":
-                        compressedfile = BytesIO(restresp.read)
-                        decompressedfile = gzip.GzipFile(fileobj=compressedfile)
-                        restresp.text = decompressedfile.read().decode("utf-8")
-                except Exception as excp:
-                    LOGGER.error('Error occur while decompressing body: %s',
-                                                                        excp)
-                    raise DecompressResponseError()
             except Exception as excp:
-                if isinstance(excp, DecompressResponseError):
-                    raise
-
                 if not cause_exception:
                     cause_exception = excp
                 LOGGER.info('Retrying %s [%s]'% (path, excp))
                 time.sleep(1)
 
-                self.__init_connection()
                 continue
             else:
                 break
@@ -980,7 +855,7 @@ class RestClientBase(object):
                         LOGGER.debug('HTTP RESPONSE for %s:\nCode: %s\nHeaders:\n' \
                                  '%s\nBody Response of %s: %s'%\
                                  (restresp.request.path,
-                                str(restresp._http_response.status)+ ' ' + \
+                                str(restresp._http_response.status_code)+ ' ' + \
                                 restresp._http_response.reason,
                                 headerstr, restresp.request.path, restresp.read))
                     except:
@@ -1016,8 +891,7 @@ class RestClientBase(object):
             headers = dict()
             headers['Authorization'] = self.__authorization_key
 
-            respvalidate = self._rest_request('%s%s' % (self.__url.path,
-                                            self.login_url), headers=headers)
+            respvalidate = self._rest_request(self.login_url, headers=headers)
 
             if respvalidate.status == 401:
                 #If your REST client has a delay for fail attempts add it here
@@ -1030,7 +904,7 @@ class RestClientBase(object):
 
             headers = dict()
             resp = self._rest_request(self.login_url, method="POST",body=data,
-                                      headers=headers, skip_redirect=True)
+                                      headers=headers, allow_redirects=False)
 
             LOGGER.info('Login returned code %s: %s', resp.status, resp.text)
 
@@ -1108,7 +982,7 @@ class HttpClient(RestClientBase):
             self.login_url = '/redfish/v1/SessionService/Sessions'
 
     def _rest_request(self, path='', method="GET", args=None, body=None,
-                      headers=None, skip_redirect=False):
+                      headers=None, allow_redirects=True):
         """Rest request for HTTP client
 
         :param path: path within tree
@@ -1121,8 +995,8 @@ class HttpClient(RestClientBase):
         :type body: dict
         :param headers: provide additional headers
         :type headers: dict
-        :param skip_redirect: controls whether redirects are followed
-        :type skip_redirect: bool
+        :param allow_redirects: controls whether redirects are followed
+        :type allow_redirects: bool
         :returns: returns a rest request
 
         """
@@ -1134,7 +1008,7 @@ class HttpClient(RestClientBase):
         return super(HttpClient, self)._rest_request(path=path, method=method,
                                                      args=args, body=body,
                                                      headers=headers,
-                                                     skip_redirect=skip_redirect)
+                                                     allow_redirects=allow_redirects)
 
     def _get_req_headers(self, headers=None, providerheader=None):
         """Get the request headers for HTTP client

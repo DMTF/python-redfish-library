@@ -462,11 +462,6 @@ class RestClientBase(object):
 
     def __exit__(self, exc_type, exc_value, exc_traceback):
         self.logout()
-        self._session.close()
-
-    def __del__(self):
-        self.logout()
-        self._session.close()
 
     def get_username(self):
         """Return used user name"""
@@ -941,6 +936,7 @@ class RestClientBase(object):
             self.__session_key = None
             self.__session_location = None
             self.__authorization_key = None
+        self._session.close()
 
 class HttpClient(RestClientBase):
     """A client for Rest"""

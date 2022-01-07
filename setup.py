@@ -31,6 +31,7 @@ setup(name='redfish',
       install_requires=[
           'jsonpath_rw',
           'jsonpointer',
+          "requests",
           'requests_toolbelt',
       ],
       extras_require={

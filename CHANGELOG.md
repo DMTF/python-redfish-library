@@ -1,5 +1,8 @@
 # Change Log
 
+## [3.1.0] - 2022-01-10
+- Updated library to leverage 'requests' in favor of 'http.client'
+
 ## [3.0.3] - 2021-10-15
 - Added support for performing multi-part HTTP POST requests
 

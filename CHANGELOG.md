@@ -1,5 +1,8 @@
 # Change Log
 
+## [3.1.1] - 2022-01-18
+- Corrected 'import' statements to support Python 3.10
+
 ## [3.1.0] - 2022-01-10
 - Updated library to leverage 'requests' in favor of 'http.client'
 

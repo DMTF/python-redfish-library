@@ -402,9 +402,31 @@ class StaticRestResponse(RestResponse):
                 returnlist.append((key, value))
         else:
             for item in self._headers:
-                returnlist.append(item.items()[0])
+                returnlist.append(item)
 
         return returnlist
+
+    def getheader(self, name):
+        """Property for accessing an individual header
+
+        :param name: The header name to retrieve.
+        :type name: str.
+        :returns: returns a header from HTTP response
+        """
+        returnheader = None
+
+        if isinstance(self._headers, dict):
+            for key, value in self._headers.items():
+                if key.lower() == name.lower():
+                    returnheader = self._headers[key]
+                    break
+        else:
+            for item in self._headers:
+                if item[0].lower() == name.lower():
+                    returnheader = item[1]
+                    break
+
+        return returnheader
 
 class AuthMethod(object):
     """AUTH Method class"""

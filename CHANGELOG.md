@@ -1,5 +1,8 @@
 # Change Log
 
+## [3.1.2] - 2022-03-10
+- Corrected usage of header storage and retrieval for static response objects
+
 ## [3.1.1] - 2022-01-18
 - Corrected 'import' statements to support Python 3.10
 

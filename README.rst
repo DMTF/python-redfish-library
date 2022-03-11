@@ -1,8 +1,6 @@
 python-redfish-library
 ======================
 
-.. image:: https://travis-ci.org/DMTF/python-redfish-library.svg?branch=master
-    :target: https://travis-ci.org/DMTF/python-redfish-library
 .. image:: https://img.shields.io/pypi/v/redfish.svg?maxAge=2592000
     :target: https://pypi.python.org/pypi/redfish
 .. image:: https://img.shields.io/github/release/DMTF/python-redfish-library.svg?maxAge=2592000

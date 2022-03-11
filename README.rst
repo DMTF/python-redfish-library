@@ -71,7 +71,7 @@ The Redfish object contains three required parameters:
 
 There are several optional parameters:
 
-* ``default_prefix``: The path to the Redfish service root.  The default value is ``/redfish/v1/``.
+* ``default_prefix``: The path to the Redfish service root.  This is only used for initial connection and authentication with the service.  The default value is ``/redfish/v1/``.
 * ``sessionkey``: The session key to use with subsequent requests.  This can be used to bypass the login step.  The default value is ``None``.
 * ``cafile``: The file path to the CA certificate that issued the Redfish service's certificate.  The default value is ``None``.
 * ``timeout``: The number of seconds to wait for a response before closing the connection.  The default value is ``None``.

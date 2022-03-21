@@ -82,7 +82,7 @@ To crete a Redfish object, call the ``redfish_client`` method:
                           password=login_password, default_prefix='/redfish/v1/')
 
 Login to the service
-~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~
 
 After creating the REDFISH_OBJ, perform the ``login`` operation to authenticate with the service.  The ``auth`` parameter allows you to specify the login method.  Possible values are:
 

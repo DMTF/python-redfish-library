@@ -62,8 +62,9 @@ Create a Redfish object
 The Redfish object contains three required parameters:
 
 * ``base_url``: The address of the Redfish service (with scheme).  Example: ``https://192.168.1.100``.
-* ``username``: The username for authentication .
-* ``password``: The password for authentication
+    * For Unix sockets, use the scheme ``http+unix://``, followed by the percent-encoded filepath to the socket.
+* ``username``: The username for authentication.
+* ``password``: The password for authentication.
 
 There are several optional parameters:
 

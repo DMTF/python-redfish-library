@@ -1,5 +1,8 @@
 # Change Log
 
+## [3.1.3] - 2022-03-21
+- Added support for Unix sockets
+
 ## [3.1.2] - 2022-03-10
 - Corrected usage of header storage and retrieval for static response objects
 

@@ -16,6 +16,7 @@ import base64
 import logging
 import warnings
 import requests
+import requests_unixsocket
 
 from collections import (OrderedDict)
 
@@ -469,7 +470,10 @@ class RestClientBase(object):
         self.__session_key = sessionkey
         self.__authorization_key = None
         self.__session_location = None
-        self._session = requests.Session()
+        if self.__base_url.startswith('http+unix://'):
+            self._session = requests_unixsocket.Session()
+        else:
+            self._session = requests.Session()
         self._timeout = timeout
         self._max_retry = max_retry if max_retry is not None else 10
         self.login_url = None

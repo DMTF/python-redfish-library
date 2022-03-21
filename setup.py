@@ -33,6 +33,7 @@ setup(name='redfish',
           'jsonpointer',
           "requests",
           'requests_toolbelt',
+          'requests-unixsocket'
       ],
       extras_require={
           ':python_version == "3.4"': [

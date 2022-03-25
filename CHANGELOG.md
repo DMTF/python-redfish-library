@@ -1,5 +1,8 @@
 # Change Log
 
+## [3.1.4] - 2022-03-25
+- Removed enforcement of trailing '/' in the 'default_prefix'
+
 ## [3.1.3] - 2022-03-21
 - Added support for Unix sockets
 

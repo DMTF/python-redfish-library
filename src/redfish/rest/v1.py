@@ -1026,11 +1026,6 @@ class HttpClient(RestClientBase):
         :returns: returns a rest request
 
         """
-        if self.default_prefix == path and path[-1] != '/':
-            path = path + '/'
-        else:
-            pass
-
         return super(HttpClient, self)._rest_request(path=path, method=method,
                                                      args=args, body=body,
                                                      headers=headers,

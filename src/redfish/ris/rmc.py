@@ -252,7 +252,7 @@ class RmcApp(object):
     current_client = property(get_current_client, None)
 
     def login(self, username=None, password=None, base_url=None, verbose=False,
-                                path=None, skipbuild=False, includelogs=False):
+                                path=None, skipbuild=False, includelogs=False, proxies=None):
         """Main worker function for login command
 
         :param username: user name required to login to server.
@@ -269,6 +269,8 @@ class RmcApp(object):
         :type skipbuild: boolean.
         :param includelogs: flag to determine id logs should be downloaded.
         :type includelogs: boolean.
+        :param proxies: Dictionary containing protocol to proxy URL mappings
+        :type proxies: dict
 
         """
         if not self.check_current_rmc_client(url=base_url):
@@ -279,11 +281,12 @@ class RmcApp(object):
         existing_client = self.get_rmc_client(url=base_url)
         if existing_client:
             self.update_rmc_client(url=base_url, username=username,
-                                                            password=password)
+                                   password=password)
         else:
             try:
                 self.add_rmc_client(RmcClient(username=username,
-                                              password=password, url=base_url))
+                                              password=password, url=base_url,
+                                              proxies=proxies))
             except Exception as excp:
                 raise excp
 

@@ -72,6 +72,7 @@ There are several optional parameters:
 * ``cafile``: The file path to the CA certificate that issued the Redfish service's certificate.  The default value is ``None``.
 * ``timeout``: The number of seconds to wait for a response before closing the connection.  The default value is ``None``.
 * ``max_retry``: The number of retries to perform an operation before giving up.  The default value is ``10``.
+* ``proxies``: A dictionary containing protocol to proxy URL mappings.  The default value is ``None``.  See `Using proxies`_.
 
 To crete a Redfish object, call the ``redfish_client`` method:
 
@@ -147,12 +148,32 @@ The ``logout`` operation deletes the current sesssion from the service.  The ``r
 Using proxies
 ~~~~~~~~~~~~~
 
+There are two methods for using proxies.
+
+Environment variables
+^^^^^^^^^^^^^^^^^^^^^
+
 You can use a proxy by specifying the ``HTTP_PROXY`` and ``HTTPS_PROXY`` environment variables.  Hosts to be excluded from the proxy can be specified using the NO_PROXY environment variable.
 
 .. code-block:: shell
 
     export HTTP_PROXY="http://192.168.1.10:8888"
     export HTTPS_PROXY="http://192.168.1.10:8888"
+
+Directly provided
+^^^^^^^^^^^^^^^^^
+
+You can use a proxy by building a dictionary containing the proxy information and providing it to the ``proxies`` argument when creating the ``redfish_client`` object.
+The key-value pairs of the dictionary contain the protocol and the proxy URL for the protocol.
+
+.. code-block:: python
+
+    proxies = {
+        'http': 'http://192.168.1.10:8888',
+        'https': 'http://192.168.1.10:8888',
+    }
+    REDFISH_OBJ = redfish.redfish_client(base_url=login_host, username=login_account, \
+                          password=login_password, proxies=proxies)
 
 Contributing
 ------------

@@ -440,7 +440,7 @@ class RestClientBase(object):
     def __init__(self, base_url, username=None, password=None,
                                 default_prefix='/redfish/v1/', sessionkey=None,
                                 capath=None, cafile=None, timeout=None,
-                                max_retry=None):
+                                max_retry=None, proxies=None):
         """Initialization of the base class RestClientBase
 
         :param base_url: The URL of the remote system
@@ -461,6 +461,8 @@ class RestClientBase(object):
         :type timeout: int
         :param max_retry: Number of times a request will retry after a timeout
         :type max_retry: int
+        :param proxies: Dictionary containing protocol to proxy URL mappings
+        :type proxies: dict
 
         """
 
@@ -476,6 +478,7 @@ class RestClientBase(object):
             self._session = requests.Session()
         self._timeout = timeout
         self._max_retry = max_retry if max_retry is not None else 10
+        self._proxies = proxies
         self.login_url = None
         self.default_prefix = default_prefix
         self.capath = capath
@@ -848,7 +851,7 @@ class RestClientBase(object):
                     verify = self.cafile
                 resp = self._session.request(method.upper(), "{}{}".format(self.__base_url, reqpath), data=body,
                                              headers=headers, timeout=self._timeout, allow_redirects=allow_redirects,
-                                             verify=verify)
+                                             verify=verify, proxies=self._proxies)
 
                 if sys.version_info < (3, 3):
                     endtime = time.clock()
@@ -970,7 +973,7 @@ class HttpClient(RestClientBase):
                                 default_prefix='/redfish/v1/',
                                 sessionkey=None, capath=None,
                                 cafile=None, timeout=None,
-                                max_retry=None):
+                                max_retry=None, proxies=None):
         """Initialize HttpClient
 
         :param base_url: The url of the remote system
@@ -991,13 +994,15 @@ class HttpClient(RestClientBase):
         :type timeout: int
         :param max_retry: Number of times a request will retry after a timeout
         :type max_retry: int
+        :param proxies: Dictionary containing protocol to proxy URL mappings
+        :type proxies: dict
 
         """
         super(HttpClient, self).__init__(base_url, username=username,
                             password=password, default_prefix=default_prefix,
                             sessionkey=sessionkey, capath=capath,
                             cafile=cafile, timeout=timeout,
-                            max_retry=max_retry)
+                            max_retry=max_retry, proxies=proxies)
 
         try:
             self.login_url = self.root.Links.Sessions['@odata.id']
@@ -1050,7 +1055,7 @@ def redfish_client(base_url=None, username=None, password=None,
                                 default_prefix='/redfish/v1/',
                                 sessionkey=None, capath=None,
                                 cafile=None, timeout=None,
-                                max_retry=None):
+                                max_retry=None, proxies=None):
     """Create and return appropriate REDFISH client instance."""
     """ Instantiates appropriate Redfish object based on existing"""
     """ configuration. Use this to retrieve a pre-configured Redfish object
@@ -1073,6 +1078,8 @@ def redfish_client(base_url=None, username=None, password=None,
     :type timeout: int
     :param max_retry: Number of times a request will retry after a timeout
     :type max_retry: int
+    :param proxies: Dictionary containing protocol to proxy URL mappings
+    :type proxies: dict
     :returns: a client object.
 
     """
@@ -1082,4 +1089,4 @@ def redfish_client(base_url=None, username=None, password=None,
     return HttpClient(base_url=base_url, username=username, password=password,
                         default_prefix=default_prefix, sessionkey=sessionkey,
                         capath=capath, cafile=cafile, timeout=timeout,
-                        max_retry=max_retry)
+                        max_retry=max_retry, proxies=proxies)

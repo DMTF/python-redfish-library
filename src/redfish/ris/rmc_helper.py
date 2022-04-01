@@ -82,7 +82,8 @@ class InvalidPathError(Exception):
 
 class RmcClient(object):
     """RMC client base class"""
-    def __init__(self, url=None, username=None, password=None, sessionkey=None):
+    def __init__(self, url=None, username=None, password=None, sessionkey=None,
+                 proxies=None):
         """Initialized RmcClient
         :param url: redfish host name or IP address.
         :type url: str.
@@ -92,10 +93,13 @@ class RmcClient(object):
         :type password: str.
         :param sessionkey: session key credential for current login
         :type sessionkey: str
+        :param proxies: Dictionary containing protocol to proxy URL mappings
+        :type proxies: dict
 
         """
-        self._rest_client = redfish.rest.v1.redfish_client(base_url=url,
-                   username=username, password=password, sessionkey=sessionkey)
+        self._rest_client = redfish.rest.v1.redfish_client(
+            base_url=url, username=username, password=password,
+            sessionkey=sessionkey, proxies=proxies)
 
         self._get_cache = dict()
         self._monolith = RisMonolith(self)

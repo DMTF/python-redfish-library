@@ -1,5 +1,8 @@
 # Change Log
 
+## [3.1.5] - 2022-04-01
+- Added methods for specifying proxies directly with a new 'proxies' parameter
+
 ## [3.1.4] - 2022-03-25
 - Removed enforcement of trailing '/' in the 'default_prefix'
 

@@ -806,7 +806,7 @@ class RestClientBase(object):
                         none_list.append(query)
                     else:
                         args_copy[query] = args[query]
-                query_str = urlencode(args_copy, quote_via=quote, safe="/?:@!$'()*+,;\\=")
+                query_str = urlencode(args_copy, quote_via=quote, safe="/?:!$'()*+,;\\=")
                 for query in none_list:
                     if len(query_str) == 0:
                         query_str += query

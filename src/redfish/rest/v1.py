@@ -165,14 +165,16 @@ class RestResponse(object):
         self._http_response = http_response
 
         if http_response is not None:
-            self._read = http_response.text
+            self._read = http_response.content
             self._status = http_response.status_code
 
     @property
     def read(self):
-        """Wrapper around httpresponse.read()"""
+        """Property for accessing raw content as an array of bytes (unless overridden)
 
-        # Backwards compatibility: for requests, we can simply use "text"; need to see if there are external dependencies to continue using read
+        TODO: Need to review usage elsewhwere; by default _read is an array of bytes, but applying a new value with a
+        setter routine will make it a string.  We might want to consider deprecating the setters.
+        """
         return self._read
 
     @read.setter
@@ -219,7 +221,11 @@ class RestResponse(object):
     @property
     def text(self):
         """Property for accessing the data as an unparsed string"""
-        return self.read
+        if isinstance(self.read, str):
+            value = self.read
+        else:
+            value = self.read.decode("utf-8", "ignore")
+        return value
 
     @text.setter
     def text(self, value):
@@ -235,10 +241,10 @@ class RestResponse(object):
     def dict(self):
         """Property for accessing the data as an dict"""
         try:
-            return json.loads(self.read)
+            return json.loads(self.text)
         except:
             str = "Service responded with invalid JSON at URI {}\n{}".format(
-                self._rest_request.path, self.read)
+                self._rest_request.path, self.text)
             LOGGER.error(str)
             raise JsonDecodingError(str) from None
 

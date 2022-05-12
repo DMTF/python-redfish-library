@@ -187,13 +187,11 @@ Contributing
 Release Process
 ---------------
 
-Run the ``release.sh`` script to publish a new version.
-
-.. code-block:: shell
-
-    sh release.sh <NewVersion>
-
-Enter the release notes when prompted; an empty line signifies no more notes to add.
+1. Go to the "Actions" page
+2. Select the "Release and Publish" workflow
+3. Click "Run workflow"
+4. Fill out the form
+5. Click "Run workflow"
 
 Copyright and License
 ---------------------

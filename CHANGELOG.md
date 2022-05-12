@@ -1,5 +1,8 @@
 # Change Log
 
+## [3.1.6] - 2022-05-12
+- Fixed issue where the 'read' method on response objects always return strings 
+- Modified query parameter encoding to not percent-encode characters allowed in query strings per RFC3986
 ## [3.1.5] - 2022-04-01
 - Added methods for specifying proxies directly with a new 'proxies' parameter
 

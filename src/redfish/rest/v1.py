@@ -800,6 +800,7 @@ class RestClientBase(object):
                     LOGGER.error('Error occur while compressing body: %s', excp)
                     raise
 
+        query_str = None
         if args:
             if method == 'GET':
                 # Workaround for this: https://github.com/psf/requests/issues/993
@@ -811,12 +812,12 @@ class RestClientBase(object):
                         none_list.append(query)
                     else:
                         args_copy[query] = args[query]
-                reqpath += '?' + urlencode(args_copy, quote_via=quote)
+                query_str = urlencode(args_copy, quote_via=quote, safe="/?:!$'()*+,;\\=")
                 for query in none_list:
-                    if reqpath[-1] == '?':
-                        reqpath += query
+                    if len(query_str) == 0:
+                        query_str += query
                     else:
-                        reqpath += '&' + query
+                        query_str += '&' + query
             elif method == 'PUT' or method == 'POST' or method == 'PATCH':
                 LOGGER.warning('For POST, PUT and PATCH methods, the provided "args" parameter "{}" is ignored.'
                                .format(args))
@@ -857,7 +858,7 @@ class RestClientBase(object):
                     verify = self.cafile
                 resp = self._session.request(method.upper(), "{}{}".format(self.__base_url, reqpath), data=body,
                                              headers=headers, timeout=self._timeout, allow_redirects=allow_redirects,
-                                             verify=verify, proxies=self._proxies)
+                                             verify=verify, proxies=self._proxies, params=query_str)
 
                 if sys.version_info < (3, 3):
                     endtime = time.clock()

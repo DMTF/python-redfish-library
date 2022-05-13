@@ -57,6 +57,7 @@ jobs:
         if [[ -n "${{github.event.inputs.changes_6}}" ]]; then echo "- ${{github.event.inputs.changes_6}}" >> $GITHUB_ENV; fi
         if [[ -n "${{github.event.inputs.changes_7}}" ]]; then echo "- ${{github.event.inputs.changes_7}}" >> $GITHUB_ENV; fi
         if [[ -n "${{github.event.inputs.changes_8}}" ]]; then echo "- ${{github.event.inputs.changes_8}}" >> $GITHUB_ENV; fi
+        echo "" >> $GITHUB_ENV
         echo 'EOF' >> $GITHUB_ENV
     - name: Update version numbers
       run: |

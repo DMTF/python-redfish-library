@@ -148,7 +148,7 @@ The ``logout`` operation deletes the current sesssion from the service.  The ``r
 Using proxies
 ~~~~~~~~~~~~~
 
-There are two methods for using proxies.
+There are two methods for using proxies: configuring environment variables or directly providing proxy information.
 
 Environment variables
 ^^^^^^^^^^^^^^^^^^^^^
@@ -175,14 +175,22 @@ The key-value pairs of the dictionary contain the protocol and the proxy URL for
     REDFISH_OBJ = redfish.redfish_client(base_url=login_host, username=login_account, \
                           password=login_password, proxies=proxies)
 
-Contributing
-------------
+SOCKS proxy support
+^^^^^^^^^^^^^^^^^^^
 
-1. Fork it!
-2. Create your feature branch: ``git checkout -b my-new-feature``
-3. Commit your changes: ``git commit -s -am 'Add some feature'``
-4. Push to the branch: ``git push origin my-new-feature``
-5. Submit a pull request :D
+An additional package is required to use SOCKS proxies.
+
+.. code-block:: console
+
+    pip install -U requests[socks]
+
+Once installed, the proxy can be configured using environment variables or directly provided like any other proxy.
+For example:
+
+.. code-block:: shell
+
+    export HTTP_PROXY="socks5h://localhost:8123"
+    export HTTPS_PROXY="socks5h://localhost:8123"
 
 Release Process
 ---------------

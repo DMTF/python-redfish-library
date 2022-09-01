@@ -45,6 +45,10 @@ class InvalidCredentialsError(Exception):
     """Raised when invalid credentials have been provided."""
     pass
 
+class SessionCreationError(Exception):
+    """Raised when a session could not be created."""
+    pass
+
 class ServerDownOrUnreachableError(Exception):
     """Raised when server is unreachable."""
     pass
@@ -929,9 +933,8 @@ class RestClientBase(object):
             respvalidate = self._rest_request(self.login_url, headers=headers)
 
             if respvalidate.status == 401:
-                #If your REST client has a delay for fail attempts add it here
-                delay = 0
-                raise InvalidCredentialsError(delay)
+                # Invalid credentials supplied
+                raise InvalidCredentialsError('HTTP 401 Unauthorized returned: Invalid credentials supplied')
         elif auth == AuthMethod.SESSION:
             data = dict()
             data['UserName'] = self.__username
@@ -947,9 +950,20 @@ class RestClientBase(object):
             self.__session_location = resp.session_location
 
             if not self.__session_key and resp.status not in [200, 201, 202, 204]:
-                #If your REST client has a delay for fail attempts added it here
-                delay = 0
-                raise InvalidCredentialsError(delay)
+                if resp.status == 401:
+                    # Invalid credentials supplied
+                    raise InvalidCredentialsError('HTTP 401 Unauthorized returned: Invalid credentials supplied')
+                else:
+                    # Other type of error during session creation
+                    error_str = resp.text
+                    try:
+                        error_str = resp.dict["error"]["@Message.ExtendedInfo"][0]["Message"]
+                    except:
+                        try:
+                            error_str = resp.dict["error"]["message"]
+                        except:
+                            pass
+                    raise SessionCreationError('HTTP {}: Failed to created the session\n{}'.format(resp.status, error_str))
             else:
                 self.set_username(None)
                 self.set_password(None)

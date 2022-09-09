@@ -1,5 +1,8 @@
 # Change Log
 
+## [3.1.7] - 2022-09-09
+- Added handling for extracting error information when a session could not be created
+
 ## [3.1.6] - 2022-05-12
 - Fixed issue where the 'read' method on response objects always return strings 
 - Modified query parameter encoding to not percent-encode characters allowed in query strings per RFC3986

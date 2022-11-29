@@ -15,6 +15,7 @@ import json
 import base64
 import logging
 import warnings
+import re
 import requests
 import requests_unixsocket
 
@@ -839,7 +840,9 @@ class RestClientBase(object):
                     logbody = None
                     if restreq.body:
                         if restreq.body[0] == '{':
-                            logbody = restreq.body
+                            # Mask password properties
+                            # NOTE: If the password itself contains a double quote, it will not redact the entire password
+                            logbody = re.sub('"Password"\s*:\s*".*?"', '"Password": "<REDACTED>"', restreq.body)
                         else:
                             raise ValueError('Body of message is binary')
                     LOGGER.debug('HTTP REQUEST: %s\n\tPATH: %s\n\tBODY: %s'% \

@@ -836,8 +836,15 @@ class RestClientBase(object):
         cause_exception = None
         while attempts <= self._max_retry:
             if LOGGER.isEnabledFor(logging.DEBUG):
+                headerstr = ''
+                if headers is not None:
+                    for header in headers:
+                        if header.lower() == "authorization":
+                            headerstr += '\t{}: <REDACTED>\n'.format(header)
+                        else:
+                            headerstr += '\t{}: {}\n'.format(header, headers[header])
                 try:
-                    logbody = None
+                    logbody = 'No request body'
                     if restreq.body:
                         if restreq.body[0] == '{':
                             # Mask password properties
@@ -845,11 +852,11 @@ class RestClientBase(object):
                             logbody = re.sub('"Password"\s*:\s*".*?"', '"Password": "<REDACTED>"', restreq.body)
                         else:
                             raise ValueError('Body of message is binary')
-                    LOGGER.debug('HTTP REQUEST: %s\n\tPATH: %s\n\tBODY: %s'% \
-                                    (restreq.method, restreq.path, logbody))
+                    LOGGER.debug('HTTP REQUEST (%s) for %s:\nHeaders:\n%s\nBody: %s\n'% \
+                                 (restreq.method, restreq.path, headerstr, logbody))
                 except:
-                    LOGGER.debug('HTTP REQUEST: %s\n\tPATH: %s\n\tBODY: %s'% \
-                                (restreq.method, restreq.path, 'binary body'))
+                    LOGGER.debug('HTTP REQUEST (%s) for %s:\nHeaders:\n%s\nBody: %s\n'% \
+                                 (restreq.method, restreq.path, headerstr, 'binary body'))
             attempts = attempts + 1
             LOGGER.info('Attempt %s of %s', attempts, path)
 
@@ -894,8 +901,8 @@ class RestClientBase(object):
                         headerstr += '\t' + header[0] + ': ' + header[1] + '\n'
 
                     try:
-                        LOGGER.debug('HTTP RESPONSE for %s:\nCode: %s\nHeaders:\n' \
-                                 '%s\nBody Response of %s: %s'%\
+                        LOGGER.debug('HTTP RESPONSE for %s:\nCode: %s\n\nHeaders:\n' \
+                                 '%s\nBody Response of %s: %s\n'%\
                                  (restresp.request.path,
                                 str(restresp._http_response.status_code)+ ' ' + \
                                 restresp._http_response.reason,

@@ -1,5 +1,9 @@
 # Change Log
 
+## [3.1.8] - 2022-12-02
+- Added request headers to debug log output
+- Added redacting of 'Password' properties from request bodies from debug logs
+
 ## [3.1.7] - 2022-09-09
 - Added handling for extracting error information when a session could not be created
 

@@ -52,7 +52,9 @@ class SessionCreationError(Exception):
 
 class ServerDownOrUnreachableError(Exception):
     """Raised when server is unreachable."""
-    pass
+    def __init__(self,message,*,response=None):
+        super().__init__(message)
+        self.response = response
 
 class DecompressResponseError(Exception):
     """Raised when decompressing response failed."""
@@ -590,7 +592,7 @@ class RestClientBase(object):
 
         if resp.status != 200:
             raise ServerDownOrUnreachableError("Server not reachable, " \
-                                               "return code: %d" % resp.status)
+                                               "return code: %d" % resp.status,response=resp)
 
         content = resp.text
 

@@ -1,5 +1,8 @@
 # Change Log
 
+## [3.1.9] - 2023-01-13
+- Improved usage of the ServerDownOrUnreachableError exception to not lose the original message
+
 ## [3.1.8] - 2022-12-02
 - Added request headers to debug log output
 - Added redacting of 'Password' properties from request bodies from debug logs

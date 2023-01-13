@@ -6,7 +6,7 @@
 """ Redfish restful library """
 
 __all__ = ['rest', 'ris', 'discovery']
-__version__ = "3.1.8"
+__version__ = "3.1.9"
 
 from redfish.rest.v1 import redfish_client
 from redfish.rest.v1 import AuthMethod

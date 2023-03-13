@@ -74,7 +74,7 @@ There are several optional parameters:
 * ``max_retry``: The number of retries to perform an operation before giving up.  The default value is ``10``.
 * ``proxies``: A dictionary containing protocol to proxy URL mappings.  The default value is ``None``.  See `Using proxies`_.
 
-To crete a Redfish object, call the ``redfish_client`` method:
+To create a Redfish object, call the ``redfish_client`` method:
 
 .. code-block:: python
 

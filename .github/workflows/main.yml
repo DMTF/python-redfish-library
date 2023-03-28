@@ -77,7 +77,7 @@ jobs:
         git config user.email "<>"
         git add CHANGELOG.md setup.py src/redfish/__init__.py
         git commit -s -m "${{github.event.inputs.version}} versioning"
-        git push origin master
+        git push origin main
     - name: Make the release
       env:
         GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}

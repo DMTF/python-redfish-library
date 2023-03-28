@@ -1,7 +1,7 @@
 # Copyright Notice:
 # Copyright 2016-2021 DMTF. All rights reserved.
 # License: BSD 3-Clause License. For full text see link:
-# https://github.com/DMTF/python-redfish-library/blob/master/LICENSE.md
+# https://github.com/DMTF/python-redfish-library/blob/main/LICENSE.md
 
 # -*- coding: utf-8 -*-
 """Helper module for working with REST technology."""
@@ -610,12 +610,12 @@ class RestClientBase(object):
     def get(self, path, args=None, headers=None):
         """Perform a GET request
 
-        :param path: the URL path.
-        :type path: str.
-        :param args: the arguments to get.
-        :type args: dict.
-        :param headers: dict of headers to be appended.
-        :type headers: dict.
+        :param path: The URI to access
+        :type path: str
+        :param args: The query parameters to provide with the request
+        :type args: dict, optional
+        :param headers: Additional HTTP headers to provide in the request
+        :type headers: dict, optional
         :returns: returns a rest request with method 'Get'
 
         """
@@ -630,12 +630,12 @@ class RestClientBase(object):
     def head(self, path, args=None, headers=None):
         """Perform a HEAD request
 
-        :param path: the URL path.
-        :type path: str.
-        :param args: the arguments to get.
-        :type args: dict.
-        :param headers: dict of headers to be appended.
-        :type headers: dict.
+        :param path: The URI to access
+        :type path: str
+        :param args: The query parameters to provide with the request
+        :type args: dict, optional
+        :param headers: Additional HTTP headers to provide in the request
+        :type headers: dict, optional
         :returns: returns a rest request with method 'Head'
 
         """
@@ -645,14 +645,14 @@ class RestClientBase(object):
     def post(self, path, args=None, body=None, headers=None):
         """Perform a POST request
 
-        :param path: the URL path.
-        :type path: str.
-        :param args: the arguments to post.
-        :type args: dict.
-        :param body: the body to the sent.
-        :type body: str.
-        :param headers: dict of headers to be appended.
-        :type headers: dict.
+        :param path: The URI to access
+        :type path: str
+        :param args: The query parameters to provide with the request
+        :type args: dict, optional
+        :param body: The request body to provide; use a dict for a JSON body, list for multipart forms, bytes for an octet stream, or str for an unstructured request
+        :type body: dict or list or bytes or str, optional
+        :param headers: Additional HTTP headers to provide in the request
+        :type headers: dict, optional
         :returns: returns a rest request with method 'Post'
 
         """
@@ -662,14 +662,14 @@ class RestClientBase(object):
     def put(self, path, args=None, body=None, headers=None):
         """Perform a PUT request
 
-        :param path: the URL path.
-        :type path: str.
-        :param args: the arguments to put.
-        :type args: dict.
-        :param body: the body to the sent.
-        :type body: str.
-        :param headers: dict of headers to be appended.
-        :type headers: dict.
+        :param path: The URI to access
+        :type path: str
+        :param args: The query parameters to provide with the request
+        :type args: dict, optional
+        :param body: The request body to provide; use a dict for a JSON body, list for multipart forms, bytes for an octet stream, or str for an unstructured request
+        :type body: dict or list or bytes or str, optional
+        :param headers: Additional HTTP headers to provide in the request
+        :type headers: dict, optional
         :returns: returns a rest request with method 'Put'
 
         """
@@ -679,14 +679,14 @@ class RestClientBase(object):
     def patch(self, path, args=None, body=None, headers=None):
         """Perform a PUT request
 
-        :param path: the URL path.
-        :type path: str.
-        :param args: the arguments to patch.
-        :type args: dict.
-        :param body: the body to the sent.
-        :type body: str.
-        :param headers: dict of headers to be appended.
-        :type headers: dict.
+        :param path: The URI to access
+        :type path: str
+        :param args: The query parameters to provide with the request
+        :type args: dict, optional
+        :param body: The request body to provide; use a dict for a JSON body, list for multipart forms, bytes for an octet stream, or str for an unstructured request
+        :type body: dict or list or bytes or str, optional
+        :param headers: Additional HTTP headers to provide in the request
+        :type headers: dict, optional
         :returns: returns a rest request with method 'Patch'
 
         """
@@ -696,12 +696,12 @@ class RestClientBase(object):
     def delete(self, path, args=None, headers=None):
         """Perform a DELETE request
 
-        :param path: the URL path.
-        :type path: str.
-        :param args: the arguments to delete.
-        :type args: dict.
-        :param headers: dict of headers to be appended.
-        :type headers: dict.
+        :param path: The URI to access
+        :type path: str
+        :param args: The query parameters to provide with the request
+        :type args: dict, optional
+        :param body: The request body to provide; use a dict for a JSON body, list for multipart forms, bytes for an octet stream, or str for an unstructured request
+        :type headers: dict, optional
         :returns: returns a rest request with method 'Delete'
 
         """
@@ -733,18 +733,18 @@ class RestClientBase(object):
                       headers=None, allow_redirects=True):
         """Rest request main function
 
-        :param path: path within tree
+        :param path: The URI to access
         :type path: str
-        :param method: method to be implemented
-        :type method: str
-        :param args: the arguments for method
-        :type args: dict
-        :param body: body payload for the rest call
-        :type body: dict
-        :param headers: provide additional headers
-        :type headers: dict
-        :param allow_redirects: controls whether redirects are followed
-        :type allow_redirects: bool
+        :param method: The HTTP method to invoke on the URI; GET if not provided
+        :type method: str, optional
+        :param args: The query parameters to provide with the request
+        :type args: dict, optional
+        :param body: The request body to provide; use a dict for a JSON body, list for multipart forms, bytes for an octet stream, or str for an unstructured request
+        :type body: dict or list or bytes or str, optional
+        :param headers: Additional HTTP headers to provide in the request
+        :type headers: dict, optional
+        :param allow_redirects: Controls whether redirects are followed
+        :type allow_redirects: bool, optional
         :returns: returns a RestResponse object
 
         """

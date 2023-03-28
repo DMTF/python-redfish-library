@@ -6,7 +6,7 @@ python-redfish-library
 .. image:: https://img.shields.io/github/release/DMTF/python-redfish-library.svg?maxAge=2592000
     :target: https://github.com/DMTF/python-redfish-library/releases
 .. image:: https://img.shields.io/badge/License-BSD%203--Clause-blue.svg
-    :target: https://raw.githubusercontent.com/DMTF/python-redfish-library/master/LICENSE
+    :target: https://raw.githubusercontent.com/DMTF/python-redfish-library/main/LICENSE
 .. image:: https://img.shields.io/pypi/pyversions/redfish.svg?maxAge=2592000
     :target: https://pypi.python.org/pypi/redfish
 
@@ -206,4 +206,4 @@ Copyright and License
 
 Copyright Notice:
 Copyright 2016-2022 DMTF. All rights reserved.
-License: BSD 3-Clause License. For full text see link: `https://github.com/DMTF/python-redfish-library/blob/master/LICENSE.md <https://github.com/DMTF/python-redfish-library/blob/master/LICENSE.md>`_
+License: BSD 3-Clause License. For full text see link: `https://github.com/DMTF/python-redfish-library/blob/main/LICENSE.md <https://github.com/DMTF/python-redfish-library/blob/main/LICENSE.md>`_

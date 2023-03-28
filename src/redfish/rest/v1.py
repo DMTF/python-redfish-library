@@ -677,7 +677,7 @@ class RestClientBase(object):
                                                                 headers=headers)
 
     def patch(self, path, args=None, body=None, headers=None):
-        """Perform a PUT request
+        """Perform a PATCH request
 
         :param path: The URI to access
         :type path: str

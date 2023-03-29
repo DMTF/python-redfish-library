@@ -130,7 +130,7 @@ Each of the previous methods allows for the following arguments:
 
 * ``path``: **Required**.  String.  The URI in which to invoke the operation.
 
-  - Example: ``"/redfish/v1/Systems/1"
+  - Example: ``"/redfish/v1/Systems/1"``
 
 * ``args``: Dictionary.  Query parameters to supply with the request.
 

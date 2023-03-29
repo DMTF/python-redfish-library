@@ -97,34 +97,65 @@ Perform a GET operation
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 A simple GET operation can be performed to obtain the data present in any valid path.
-An example of GET operation on the path "/redfish/v1/systems/1" is shown below:
+An example of GET operation on the path "/redfish/v1/Systems/1" is shown below:
 
 .. code-block:: python
 
-    response = REDFISH_OBJ.get("/redfish/v1/systems/1", None)
+    response = REDFISH_OBJ.get("/redfish/v1/Systems/1")
 
 Perform a POST operation
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 A POST operation can be performed to create a resource or perform an action.
-An example of a POST operation on the path "/redfish/v1/systems/1/Actions/ComputerSystem.Reset" is shown below:
+An example of a POST operation on the path "/redfish/v1/Systems/1/Actions/ComputerSystem.Reset" is shown below:
 
 .. code-block:: python
 
     body = {"ResetType": "GracefulShutdown"}
-    response = REDFISH_OBJ.post("/redfish/v1/systems/1/Actions/ComputerSystem.Reset", body=body)
+    response = REDFISH_OBJ.post("/redfish/v1/Systems/1/Actions/ComputerSystem.Reset", body=body)
+
+Notes about HTTP methods and arguments
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The previous sections showed example GET and POST requests.  The following is a list of the different methods supported:
+
+* ``get``: Performs an HTTP GET operation to retrieve a resource from a URI.
+* ``head``: Performs an HTTP HEAD operation to retrieve response headers from a URI, but no body.
+* ``post``: Performs an HTTP POST operation to perform an action or create a new resource.
+* ``put``: Performs an HTTP PUT operation to replace an existing resource.
+* ``patch``: Performs an HTTP PATCH operation to update an existing resource.
+* ``delete``: Performs an HTTP DELETE operation to remove a resource.
+
+Each of the previous methods allows for the following arguments:
+
+* ``path``: **Required**.  String.  The URI in which to invoke the operation.
+  - Example: ``"/redfish/v1/Systems/1"
+* ``args``: Dictionary.  Query parameters to supply with the request.
+  - The key-value pairs in the dictionary are the query parameter name and the query parameter value to supply.
+  - Example: ``{"$select": "Reading,Status"}``
+* ``body``: Dictionary, List, Bytes, or String.  The request body to provide with the request.
+  - Not supported for ``get``, ``head``, or ``delete`` methods.
+  - The data type supplied will dictate the encoding.
+  - A dictionary is the most common usage, which results in a JSON body.
+  - Example: ``{"ResetType": "GracefulShutdown"}``
+  - A list is used to supply multipart forms, which is useful for multipart HTTP push updates.
+  - Bytes is used to supply an octet stream.
+  - A string is used to supply an unstructed body, which may be used in some OEM cases.
+* ``headers``: Dictionary.  Additional HTTP headers to supply with the request.
+  - The key-value pairs in the dictionary are the HTTP header name and the HTTP header value to supply.
+  - Example: ``{"If-Match": etag_value}``
 
 Working with tasks
 ~~~~~~~~~~~~~~~~~~
 
-A POST and PATCH operations may result in a task, describing an operation with a duration greater than the span of a single request.
+POST, PATCH, PUT, and DELETE operations may result in a task, describing an operation with a duration greater than the span of a single request.
 The action message object that ``is_processing`` will return a task that can be accessed reviewed when polled with monitor.
 An example of a POST operation with a possible task is shown below.
 
 .. code-block:: python
 
     body = {"ResetType": "GracefulShutdown"}
-    response = REDFISH_OBJ.post("/redfish/v1/systems/1/Actions/ComputerSystem.Reset", body=body)
+    response = REDFISH_OBJ.post("/redfish/v1/Systems/1/Actions/ComputerSystem.Reset", body=body)
     if(response.is_processing):
         task = response.monitor(context)
 

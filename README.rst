@@ -129,11 +129,16 @@ The previous sections showed example GET and POST requests.  The following is a 
 Each of the previous methods allows for the following arguments:
 
 * ``path``: **Required**.  String.  The URI in which to invoke the operation.
+
   - Example: ``"/redfish/v1/Systems/1"
+
 * ``args``: Dictionary.  Query parameters to supply with the request.
+
   - The key-value pairs in the dictionary are the query parameter name and the query parameter value to supply.
   - Example: ``{"$select": "Reading,Status"}``
+
 * ``body``: Dictionary, List, Bytes, or String.  The request body to provide with the request.
+
   - Not supported for ``get``, ``head``, or ``delete`` methods.
   - The data type supplied will dictate the encoding.
   - A dictionary is the most common usage, which results in a JSON body.
@@ -141,7 +146,9 @@ Each of the previous methods allows for the following arguments:
   - A list is used to supply multipart forms, which is useful for multipart HTTP push updates.
   - Bytes is used to supply an octet stream.
   - A string is used to supply an unstructed body, which may be used in some OEM cases.
+
 * ``headers``: Dictionary.  Additional HTTP headers to supply with the request.
+
   - The key-value pairs in the dictionary are the HTTP header name and the HTTP header value to supply.
   - Example: ``{"If-Match": etag_value}``
 

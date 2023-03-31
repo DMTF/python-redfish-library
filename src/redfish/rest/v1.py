@@ -700,7 +700,7 @@ class RestClientBase(object):
         :type path: str
         :param args: The query parameters to provide with the request
         :type args: dict, optional
-        :param body: The request body to provide; use a dict for a JSON body, list for multipart forms, bytes for an octet stream, or str for an unstructured request
+        :param headers: Additional HTTP headers to provide in the request
         :type headers: dict, optional
         :returns: returns a rest request with method 'Delete'
 

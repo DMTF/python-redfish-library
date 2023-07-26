@@ -82,7 +82,7 @@ def discover_ssdp(port=1900, ttl=2, response_time=3, iface=None, protocol="ipv4"
         "Host: {}:{}\r\n"
         'Man: "ssdp:discover"\r\n'
         "ST: urn:dmtf-org:service:redfish-rest:1\r\n"
-        "MX: {}\r\n"
+        "MX: {}\r\n\r\n"
     ).format(mcast_ip, port, response_time)
     socket.setdefaulttimeout(response_time + 2)
 

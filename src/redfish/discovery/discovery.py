@@ -99,7 +99,7 @@ def discover_ssdp(port=1900, ttl=2, response_time=3, iface=None, protocol="ipv4"
     # On the same socket, wait for responses
     discovered_services = {}
     pattern = re.compile(
-        "^uuid:([a-f0-9\-]*)::urn:dmtf-org:service:redfish-rest:1(:\d)?$") # noqa
+        "^uuid:([a-f0-9\-]*)::urn:dmtf-org:service:redfish-rest:1(:\d+)?$") # noqa
     while True:
         try:
             response = http.client.HTTPResponse(FakeSocket(sock.recv(1024)))

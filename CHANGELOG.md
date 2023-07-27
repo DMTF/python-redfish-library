@@ -1,5 +1,9 @@
 # Change Log
 
+## [3.2.0] - 2023-07-27
+- Adding missing newline to M-SEARCH requests
+- Fixed the inspection of the USN response header from M-SEARCH requests to allow for a multi-digit minor version
+
 ## [3.1.9] - 2023-01-13
 - Improved usage of the ServerDownOrUnreachableError exception to not lose the original message
 

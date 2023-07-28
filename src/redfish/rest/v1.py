@@ -18,6 +18,7 @@ import warnings
 import re
 import requests
 import requests_unixsocket
+from redfish.messages import *
 
 from collections import (OrderedDict)
 
@@ -961,6 +962,10 @@ class RestClientBase(object):
             self.__session_key = resp.session_key
             self.__session_location = resp.session_location
 
+            message_item = search_message(resp, "Base", "PasswordChangeRequired")
+            if not message_item is None:
+                raise RedfishPasswordChangeRequiredError("Password Change Required\n", message_item["MessageArgs"][0])
+            
             if not self.__session_key and resp.status not in [200, 201, 202, 204]:
                 if resp.status == 401:
                     # Invalid credentials supplied

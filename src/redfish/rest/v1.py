@@ -628,6 +628,27 @@ class RestClientBase(object):
             LOGGER.error(str)
             raise JsonDecodingError(str) from None
 
+    def ifmatch_header(self, path, headers=None, ifmatch=False):
+        if headers is None:
+            headers = {}
+        if ifmatch is False:
+            return headers
+        if "If-None-Match" in headers:
+            return headers
+        if "If-Match" in headers:
+            return headers
+        try:
+            actions_search = "^/redfish/v1/.*/Actions/.*$"
+            resault = re.search(actions_search, path)
+            if not resault:
+                response = self.get(path)
+                etag = response.getheader( "ETag" )
+                if etag is not None:
+                    headers[ "If-Match"] = etag
+        except Exception:
+            pass
+        return headers
+
     def head(self, path, args=None, headers=None):
         """Perform a HEAD request
 
@@ -643,7 +664,7 @@ class RestClientBase(object):
         return self._rest_request(path, method='HEAD', args=args,
                                                                 headers=headers)
 
-    def post(self, path, args=None, body=None, headers=None):
+    def post(self, path, args=None, body=None, headers=None, ifmatch=False):
         """Perform a POST request
 
         :param path: The URI to access
@@ -657,10 +678,11 @@ class RestClientBase(object):
         :returns: returns a rest request with method 'Post'
 
         """
+        headers = self.ifmatch_header(path, headers=headers, ifmatch=ifmatch)
         return self._rest_request(path, method='POST', args=args, body=body,
                                                                 headers=headers)
 
-    def put(self, path, args=None, body=None, headers=None):
+    def put(self, path, args=None, body=None, headers=None, ifmatch=False):
         """Perform a PUT request
 
         :param path: The URI to access
@@ -674,10 +696,11 @@ class RestClientBase(object):
         :returns: returns a rest request with method 'Put'
 
         """
+        headers = self.ifmatch_header(path, headers=headers, ifmatch=ifmatch)
         return self._rest_request(path, method='PUT', args=args, body=body,
                                                                 headers=headers)
 
-    def patch(self, path, args=None, body=None, headers=None):
+    def patch(self, path, args=None, body=None, headers=None, ifmatch=False):
         """Perform a PATCH request
 
         :param path: The URI to access
@@ -691,10 +714,11 @@ class RestClientBase(object):
         :returns: returns a rest request with method 'Patch'
 
         """
+        headers = self.ifmatch_header(path, headers=headers, ifmatch=ifmatch)
         return self._rest_request(path, method='PATCH', args=args, body=body,
                                                                 headers=headers)
 
-    def delete(self, path, args=None, headers=None):
+    def delete(self, path, args=None, headers=None, ifmatch=False):
         """Perform a DELETE request
 
         :param path: The URI to access
@@ -706,6 +730,7 @@ class RestClientBase(object):
         :returns: returns a rest request with method 'Delete'
 
         """
+        headers = self.ifmatch_header(path, headers=headers, ifmatch=ifmatch)
         return self._rest_request(path, method='DELETE', args=args,
                                                                 headers=headers)
 

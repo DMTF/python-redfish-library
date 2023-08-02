@@ -607,7 +607,7 @@ class RestClientBase(object):
         self.root = RisObject.parse(root_data)
         self.root_resp = resp
 
-    def get(self, path, args=None, headers=None):
+    def get(self, path, args=None, headers=None, timeout=None):
         """Perform a GET request
 
         :param path: The URI to access
@@ -616,18 +616,20 @@ class RestClientBase(object):
         :type args: dict, optional
         :param headers: Additional HTTP headers to provide in the request
         :type headers: dict, optional
+        :param timeout: Timeout in seconds for the initial connection for this specific request
+        :type timeout: int
         :returns: returns a rest request with method 'Get'
 
         """
         try:
             return self._rest_request(path, method='GET', args=args,
-                                                                headers=headers)
+                                      headers=headers, timeout=timeout)
         except ValueError:
             str = "Service responded with invalid JSON at URI {}".format(path)
             LOGGER.error(str)
             raise JsonDecodingError(str) from None
 
-    def head(self, path, args=None, headers=None):
+    def head(self, path, args=None, headers=None, timeout=None):
         """Perform a HEAD request
 
         :param path: The URI to access
@@ -636,13 +638,15 @@ class RestClientBase(object):
         :type args: dict, optional
         :param headers: Additional HTTP headers to provide in the request
         :type headers: dict, optional
+        :param timeout: Timeout in seconds for the initial connection for this specific request
+        :type timeout: int
         :returns: returns a rest request with method 'Head'
 
         """
         return self._rest_request(path, method='HEAD', args=args,
-                                                                headers=headers)
+                                  headers=headers, timeout=timeout)
 
-    def post(self, path, args=None, body=None, headers=None):
+    def post(self, path, args=None, body=None, headers=None, timeout=None):
         """Perform a POST request
 
         :param path: The URI to access
@@ -653,13 +657,15 @@ class RestClientBase(object):
         :type body: dict or list or bytes or str, optional
         :param headers: Additional HTTP headers to provide in the request
         :type headers: dict, optional
+        :param timeout: Timeout in seconds for the initial connection for this specific request
+        :type timeout: int
         :returns: returns a rest request with method 'Post'
 
         """
         return self._rest_request(path, method='POST', args=args, body=body,
-                                                                headers=headers)
+                                  headers=headers, timeout=timeout)
 
-    def put(self, path, args=None, body=None, headers=None):
+    def put(self, path, args=None, body=None, headers=None, timeout=None):
         """Perform a PUT request
 
         :param path: The URI to access
@@ -670,13 +676,15 @@ class RestClientBase(object):
         :type body: dict or list or bytes or str, optional
         :param headers: Additional HTTP headers to provide in the request
         :type headers: dict, optional
+        :param timeout: Timeout in seconds for the initial connection for this specific request
+        :type timeout: int
         :returns: returns a rest request with method 'Put'
 
         """
         return self._rest_request(path, method='PUT', args=args, body=body,
-                                                                headers=headers)
+                                  headers=headers, timeout=timeout)
 
-    def patch(self, path, args=None, body=None, headers=None):
+    def patch(self, path, args=None, body=None, headers=None, timeout=None):
         """Perform a PATCH request
 
         :param path: The URI to access
@@ -687,13 +695,15 @@ class RestClientBase(object):
         :type body: dict or list or bytes or str, optional
         :param headers: Additional HTTP headers to provide in the request
         :type headers: dict, optional
+        :param timeout: Timeout in seconds for the initial connection for this specific request
+        :type timeout: int
         :returns: returns a rest request with method 'Patch'
 
         """
         return self._rest_request(path, method='PATCH', args=args, body=body,
-                                                                headers=headers)
+                                  headers=headers, timeout=timeout)
 
-    def delete(self, path, args=None, headers=None):
+    def delete(self, path, args=None, headers=None, timeout=None):
         """Perform a DELETE request
 
         :param path: The URI to access
@@ -702,11 +712,13 @@ class RestClientBase(object):
         :type args: dict, optional
         :param headers: Additional HTTP headers to provide in the request
         :type headers: dict, optional
+        :param timeout: Timeout in seconds for the initial connection for this specific request
+        :type timeout: int
         :returns: returns a rest request with method 'Delete'
 
         """
         return self._rest_request(path, method='DELETE', args=args,
-                                                                headers=headers)
+                                  headers=headers, timeout=timeout)
 
     def _get_req_headers(self, headers=None):
         """Get the request headers
@@ -730,7 +742,7 @@ class RestClientBase(object):
         return headers
 
     def _rest_request(self, path, method='GET', args=None, body=None,
-                      headers=None, allow_redirects=True):
+                      headers=None, allow_redirects=True, timeout=None):
         """Rest request main function
 
         :param path: The URI to access
@@ -745,6 +757,8 @@ class RestClientBase(object):
         :type headers: dict, optional
         :param allow_redirects: Controls whether redirects are followed
         :type allow_redirects: bool, optional
+        :param timeout: Timeout in seconds for the initial connection for this specific request
+        :type timeout: int
         :returns: returns a RestResponse object
 
         """
@@ -872,8 +886,12 @@ class RestClientBase(object):
                 verify = False
                 if self.cafile:
                     verify = self.cafile
+                if timeout is None:
+                    # If a timeout was not specifically called for this
+                    # request, use the default timeout
+                    timeout = self._timeout
                 resp = self._session.request(method.upper(), "{}{}".format(self.__base_url, reqpath), data=body,
-                                             headers=headers, timeout=self._timeout, allow_redirects=allow_redirects,
+                                             headers=headers, timeout=timeout, allow_redirects=allow_redirects,
                                              verify=verify, proxies=self._proxies, params=query_str)
 
                 if sys.version_info < (3, 3):
@@ -1046,7 +1064,7 @@ class HttpClient(RestClientBase):
             self.login_url = '/redfish/v1/SessionService/Sessions'
 
     def _rest_request(self, path='', method="GET", args=None, body=None,
-                      headers=None, allow_redirects=True):
+                      headers=None, allow_redirects=True, timeout=None):
         """Rest request for HTTP client
 
         :param path: path within tree
@@ -1061,13 +1079,16 @@ class HttpClient(RestClientBase):
         :type headers: dict
         :param allow_redirects: controls whether redirects are followed
         :type allow_redirects: bool
+        :param timeout: Timeout in seconds for the initial connection for this specific request
+        :type timeout: int
         :returns: returns a rest request
 
         """
         return super(HttpClient, self)._rest_request(path=path, method=method,
                                                      args=args, body=body,
                                                      headers=headers,
-                                                     allow_redirects=allow_redirects)
+                                                     allow_redirects=allow_redirects,
+                                                     timeout=timeout)
 
     def _get_req_headers(self, headers=None, providerheader=None):
         """Get the request headers for HTTP client

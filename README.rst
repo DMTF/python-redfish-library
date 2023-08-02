@@ -152,6 +152,12 @@ Each of the previous methods allows for the following arguments:
   - The key-value pairs in the dictionary are the HTTP header name and the HTTP header value to supply.
   - Example: ``{"If-Match": etag_value}``
 
+* ``timeout``: Number.  The number of seconds to wait for a response before closing the connection for this request.
+
+  - Overrides the timeout value specified when the Redfish object is created for this request.
+  - This can be useful when a particular URI is known to take a long time to respond, such as with firmware updates.
+  - The default value is ``None``, which indicates the object-defined timeout is used.
+
 Working with tasks
 ~~~~~~~~~~~~~~~~~~
 

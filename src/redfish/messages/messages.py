@@ -43,6 +43,7 @@ def get_messages_detail( response ):
 
     messages_detail = {}
     messages_detail["status"] = response.status
+    messages_detail["text"] = response.text
     messages_detail["successful"] = False
     messages_detail["@Message.ExtendedInfo"] = []
 
@@ -53,6 +54,8 @@ def get_messages_detail( response ):
 
     try:
         message_body = response.dict
+        messages_detail["body"] = response.dict
+
         if not "@Message.ExtendedInfo" in message_body:
             message_body = response.dict["error"]
         check_message_field = True
@@ -81,6 +84,7 @@ def get_messages_detail( response ):
             messages_detail["@Message.ExtendedInfo"].insert(0, messages_item)
     except:
         messages_detail["@Message.ExtendedInfo"] = []
+        messages_detail["body"] = {}
 
     return messages_detail
 

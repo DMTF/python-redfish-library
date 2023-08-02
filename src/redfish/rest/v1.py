@@ -616,6 +616,10 @@ class RestClientBase(object):
         :type args: dict, optional
         :param headers: Additional HTTP headers to provide in the request
         :type headers: dict, optional
+        :param timeout: Timeout in seconds for the initial connection for this specific request
+        :type timeout: int, optional
+        :param max_retry: Number of times a request will retry after a timeout for this specific request
+        :type max_retry: int, optional
         :returns: returns a rest request with method 'Get'
 
         """
@@ -636,6 +640,10 @@ class RestClientBase(object):
         :type args: dict, optional
         :param headers: Additional HTTP headers to provide in the request
         :type headers: dict, optional
+        :param timeout: Timeout in seconds for the initial connection for this specific request
+        :type timeout: int, optional
+        :param max_retry: Number of times a request will retry after a timeout for this specific request
+        :type max_retry: int, optional
         :returns: returns a rest request with method 'Head'
 
         """
@@ -653,6 +661,10 @@ class RestClientBase(object):
         :type body: dict or list or bytes or str, optional
         :param headers: Additional HTTP headers to provide in the request
         :type headers: dict, optional
+        :param timeout: Timeout in seconds for the initial connection for this specific request
+        :type timeout: int, optional
+        :param max_retry: Number of times a request will retry after a timeout for this specific request
+        :type max_retry: int, optional
         :returns: returns a rest request with method 'Post'
 
         """
@@ -670,6 +682,10 @@ class RestClientBase(object):
         :type body: dict or list or bytes or str, optional
         :param headers: Additional HTTP headers to provide in the request
         :type headers: dict, optional
+        :param timeout: Timeout in seconds for the initial connection for this specific request
+        :type timeout: int, optional
+        :param max_retry: Number of times a request will retry after a timeout for this specific request
+        :type max_retry: int, optional
         :returns: returns a rest request with method 'Put'
 
         """
@@ -687,6 +703,10 @@ class RestClientBase(object):
         :type body: dict or list or bytes or str, optional
         :param headers: Additional HTTP headers to provide in the request
         :type headers: dict, optional
+        :param timeout: Timeout in seconds for the initial connection for this specific request
+        :type timeout: int, optional
+        :param max_retry: Number of times a request will retry after a timeout for this specific request
+        :type max_retry: int, optional
         :returns: returns a rest request with method 'Patch'
 
         """
@@ -702,6 +722,10 @@ class RestClientBase(object):
         :type args: dict, optional
         :param headers: Additional HTTP headers to provide in the request
         :type headers: dict, optional
+        :param timeout: Timeout in seconds for the initial connection for this specific request
+        :type timeout: int, optional
+        :param max_retry: Number of times a request will retry after a timeout for this specific request
+        :type max_retry: int, optional
         :returns: returns a rest request with method 'Delete'
 
         """
@@ -745,6 +769,10 @@ class RestClientBase(object):
         :type headers: dict, optional
         :param allow_redirects: Controls whether redirects are followed
         :type allow_redirects: bool, optional
+        :param timeout: Timeout in seconds for the initial connection for this specific request
+        :type timeout: int, optional
+        :param max_retry: Number of times a request will retry after a timeout for this specific request
+        :type max_retry: int, optional
         :returns: returns a RestResponse object
 
         """
@@ -1067,6 +1095,10 @@ class HttpClient(RestClientBase):
         :type headers: dict
         :param allow_redirects: controls whether redirects are followed
         :type allow_redirects: bool
+        :param timeout: Timeout in seconds for the initial connection for this specific request
+        :type timeout: int
+        :param max_retry: Number of times a request will retry after a timeout for this specific request
+        :type max_retry: int
         :returns: returns a rest request
 
         """

@@ -607,7 +607,7 @@ class RestClientBase(object):
         self.root = RisObject.parse(root_data)
         self.root_resp = resp
 
-    def get(self, path, args=None, headers=None):
+    def get(self, path, args=None, headers=None, timeout=None, max_retry=None):
         """Perform a GET request
 
         :param path: The URI to access
@@ -621,13 +621,13 @@ class RestClientBase(object):
         """
         try:
             return self._rest_request(path, method='GET', args=args,
-                                                                headers=headers)
+                                                                headers=headers, timeout=timeout, max_retry=max_retry)
         except ValueError:
             str = "Service responded with invalid JSON at URI {}".format(path)
             LOGGER.error(str)
             raise JsonDecodingError(str) from None
 
-    def head(self, path, args=None, headers=None):
+    def head(self, path, args=None, headers=None, timeout=None, max_retry=None):
         """Perform a HEAD request
 
         :param path: The URI to access
@@ -640,9 +640,9 @@ class RestClientBase(object):
 
         """
         return self._rest_request(path, method='HEAD', args=args,
-                                                                headers=headers)
+                                                                headers=headers, timeout=timeout, max_retry=max_retry)
 
-    def post(self, path, args=None, body=None, headers=None):
+    def post(self, path, args=None, body=None, headers=None, timeout=None, max_retry=None):
         """Perform a POST request
 
         :param path: The URI to access
@@ -657,9 +657,9 @@ class RestClientBase(object):
 
         """
         return self._rest_request(path, method='POST', args=args, body=body,
-                                                                headers=headers)
+                                                                headers=headers, timeout=timeout, max_retry=max_retry)
 
-    def put(self, path, args=None, body=None, headers=None):
+    def put(self, path, args=None, body=None, headers=None, timeout=None, max_retry=None):
         """Perform a PUT request
 
         :param path: The URI to access
@@ -674,9 +674,9 @@ class RestClientBase(object):
 
         """
         return self._rest_request(path, method='PUT', args=args, body=body,
-                                                                headers=headers)
+                                                                headers=headers, timeout=timeout, max_retry=max_retry)
 
-    def patch(self, path, args=None, body=None, headers=None):
+    def patch(self, path, args=None, body=None, headers=None, timeout=None, max_retry=None):
         """Perform a PATCH request
 
         :param path: The URI to access
@@ -691,9 +691,9 @@ class RestClientBase(object):
 
         """
         return self._rest_request(path, method='PATCH', args=args, body=body,
-                                                                headers=headers)
+                                                                headers=headers, timeout=timeout, max_retry=max_retry)
 
-    def delete(self, path, args=None, headers=None):
+    def delete(self, path, args=None, headers=None, timeout=None, max_retry=None):
         """Perform a DELETE request
 
         :param path: The URI to access
@@ -706,7 +706,7 @@ class RestClientBase(object):
 
         """
         return self._rest_request(path, method='DELETE', args=args,
-                                                                headers=headers)
+                                                                headers=headers, timeout=timeout, max_retry=max_retry)
 
     def _get_req_headers(self, headers=None):
         """Get the request headers
@@ -730,7 +730,7 @@ class RestClientBase(object):
         return headers
 
     def _rest_request(self, path, method='GET', args=None, body=None,
-                      headers=None, allow_redirects=True):
+                      headers=None, allow_redirects=True, timeout=None, max_retry=None):
         """Rest request main function
 
         :param path: The URI to access
@@ -748,6 +748,12 @@ class RestClientBase(object):
         :returns: returns a RestResponse object
 
         """
+        if timeout is None:
+            timeout = self._timeout
+
+        if max_retry is None:
+            max_retry = self._max_retry
+
         headers = self._get_req_headers(headers)
         reqpath = path.replace('//', '/')
 
@@ -786,7 +792,7 @@ class RestClientBase(object):
                 body = urlencode(body)
 
             if method == 'PUT':
-                resp = self._rest_request(path=path)
+                resp = self._rest_request(path=path, timeout=timeout, max_retry=max_retry)
 
                 try:
                     if resp.getheader('content-encoding') == 'gzip':
@@ -836,7 +842,7 @@ class RestClientBase(object):
         attempts = 0
         restresp = None
         cause_exception = None
-        while attempts <= self._max_retry:
+        while attempts <= max_retry:
             if LOGGER.isEnabledFor(logging.DEBUG):
                 headerstr = ''
                 if headers is not None:
@@ -873,7 +879,7 @@ class RestClientBase(object):
                 if self.cafile:
                     verify = self.cafile
                 resp = self._session.request(method.upper(), "{}{}".format(self.__base_url, reqpath), data=body,
-                                             headers=headers, timeout=self._timeout, allow_redirects=allow_redirects,
+                                             headers=headers, timeout=timeout, allow_redirects=allow_redirects,
                                              verify=verify, proxies=self._proxies, params=query_str)
 
                 if sys.version_info < (3, 3):
@@ -1046,7 +1052,7 @@ class HttpClient(RestClientBase):
             self.login_url = '/redfish/v1/SessionService/Sessions'
 
     def _rest_request(self, path='', method="GET", args=None, body=None,
-                      headers=None, allow_redirects=True):
+                      headers=None, allow_redirects=True, timeout=None, max_retry=None):
         """Rest request for HTTP client
 
         :param path: path within tree
@@ -1067,7 +1073,7 @@ class HttpClient(RestClientBase):
         return super(HttpClient, self)._rest_request(path=path, method=method,
                                                      args=args, body=body,
                                                      headers=headers,
-                                                     allow_redirects=allow_redirects)
+                                                     allow_redirects=allow_redirects, timeout=timeout, max_retry=max_retry)
 
     def _get_req_headers(self, headers=None, providerheader=None):
         """Get the request headers for HTTP client

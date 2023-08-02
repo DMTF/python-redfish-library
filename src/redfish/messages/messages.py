@@ -62,20 +62,8 @@ def get_messages_detail( response ):
                 messages_item = messages_detail["@Message.ExtendedInfo"][index]
                 if not "MessageId" in messages_item:
                     messages_item["MessageId"] = ""
-                if not "@odata.type" in messages_item:
-                    messages_item["@odata.type"] = ""
-                if not "RelatedProperties" in messages_item:
-                    messages_item["RelatedProperties"] = []
                 if not "Message" in messages_item:
                     messages_item["Message"] = ""
-                if not "MessageArgs" in messages_item:
-                    messages_item["MessageArgs"] = []
-                if not "Severity" in messages_item:
-                    messages_item["Severity"] = ""
-                if not "MessageSeverity" in messages_item:
-                    messages_item["MessageSeverity"] = ""
-                if not "Resolution" in messages_item:
-                    messages_item["Resolution"] = ""
                 messages_detail["@Message.ExtendedInfo"][index] = messages_item
                 check_message_field = False
 
@@ -90,14 +78,6 @@ def get_messages_detail( response ):
                 messages_item["Message"] = message_body["message"]
             else:
                 messages_item["Message"] = ""
-
-            messages_item["@odata.type"] = ""
-            messages_item["RelatedProperties"] = []
-            messages_item["MessageArgs"] = []
-            messages_item["RelatedProperties"] = []
-            messages_item["MessageArgs"] = []
-            messages_item["MessageSeverity"] = ""
-            messages_item["Resolution"] = ""
             messages_detail["@Message.ExtendedInfo"].insert(0, messages_item)
     except:
         messages_detail["@Message.ExtendedInfo"] = []
@@ -162,21 +142,3 @@ def get_error_messages( response ):
 
     return out_string
 
-def verify_response( response ):
-    """
-    Verifies a response and raises an exception if there was a failure
-
-    Args:
-        response: The response to verify
-    """
-
-    if response.status >= 400:
-        messages_detail = get_messages_detail(response)
-        exception_string = get_error_messages( messages_detail )
-        message_item = search_message(messages_detail, "Base", "PasswordChangeRequired")
-        if not message_item is None:
-            raise RedfishPasswordChangeRequiredError( "Operation failed: HTTP {}\n{}".format( response.status, exception_string ), message_item["MessageArgs"][0])
-        else:
-            raise RedfishOperationFailedError( "Operation failed: HTTP {}\n{}".format( response.status, exception_string ) )
-
-    return

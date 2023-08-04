@@ -1,5 +1,9 @@
 # Change Log
 
+## [3.2.1] - 2023-08-04
+- Added 'timeout' and 'max_retry' parameters to all REST methods
+- Added  exception to the  method when a response contains a message indicating a password change is required
+
 ## [3.2.0] - 2023-07-27
 - Adding missing newline to M-SEARCH requests
 - Fixed the inspection of the USN response header from M-SEARCH requests to allow for a multi-digit minor version

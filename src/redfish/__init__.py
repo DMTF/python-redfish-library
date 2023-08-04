@@ -5,12 +5,13 @@
 
 """ Redfish restful library """
 
-__all__ = ['rest', 'ris', 'discovery']
+__all__ = ['rest', 'ris', 'discovery', 'messages']
 __version__ = "3.2.0"
 
 from redfish.rest.v1 import redfish_client
 from redfish.rest.v1 import AuthMethod
 from redfish.discovery.discovery import discover_ssdp
+from redfish.messages import *
 import logging
 
 def redfish_logger(file_name, log_format, log_level=logging.ERROR):

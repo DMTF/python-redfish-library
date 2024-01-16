@@ -886,7 +886,7 @@ class RestClientBase(object):
                         if restreq.body[0] == '{':
                             # Mask password properties
                             # NOTE: If the password itself contains a double quote, it will not redact the entire password
-                            logbody = re.sub('"Password"\s*:\s*".*?"', '"Password": "<REDACTED>"', restreq.body)
+                            logbody = re.sub(r'"Password"\s*:\s*".*?"', '"Password": "<REDACTED>"', restreq.body)
                         else:
                             raise ValueError('Body of message is binary')
                     LOGGER.debug('HTTP REQUEST (%s) for %s:\nHeaders:\n%s\nBody: %s\n'% \

@@ -104,7 +104,7 @@ def search_message(response, message_registry_group, message_registry_id):
     else:
         messages_detail = get_messages_detail(response)
 
-    message_registry_id_search = "^" + message_registry_group + "\.[0-9]+\.[0-9]+\." + message_registry_id +"$"
+    message_registry_id_search = "^" + message_registry_group + r"\.[0-9]+\.[0-9]+\." + message_registry_id +"$"
 
     for messages_item in messages_detail["@Message.ExtendedInfo"]:
         if "MessageId" in messages_item:

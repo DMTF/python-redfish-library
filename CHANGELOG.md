@@ -1,5 +1,8 @@
 # Change Log
 
+## [3.2.2] - 2024-01-19
+- Minor changes to fix Python 3.12 warnings with usage of raw strings
+
 ## [3.2.1] - 2023-08-04
 - Added 'timeout' and 'max_retry' parameters to all REST methods
 - Added  exception to the  method when a response contains a message indicating a password change is required

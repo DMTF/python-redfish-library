@@ -83,10 +83,10 @@ jobs:
         GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
       run: |
         gh release create ${{github.event.inputs.version}} -t ${{github.event.inputs.version}} -n "Changes since last release:"$'\n\n'"$CHANGES"
-    - name: Build and publish to pypi
-      env:
-        TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
-        TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+    - name: Build the distribution
       run: |
         python setup.py sdist bdist_wheel
-        twine upload dist/*
+    - name: Upload to pypi
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        password: ${{ secrets.PYPI_API_TOKEN }}

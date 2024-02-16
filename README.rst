@@ -40,6 +40,24 @@ Requirements
 
 Ensure the system does not have the OpenStack "python-redfish" module installed on the target system.  This module is using a conflicting package name that this library already uses.  The module in question can be found here: https://pypi.org/project/python-redfish/
 
+Required external packages:
+
+.. code-block:: console
+
+    jsonpatch<=1.24 ; python_version == '3.4'
+    jsonpatch ; python_version >= '3.5'
+    jsonpath_rw
+    jsonpointer
+    requests
+    requests-toolbelt
+    requests-unixsocket
+
+If installing from GitHub, you may install the external packages by running:
+
+.. code-block:: console
+
+    pip install -r requirements.txt
+
 Usage
 ----------
 

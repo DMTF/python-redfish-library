@@ -194,13 +194,13 @@ An example of a POST operation with a possible task is shown below.
     body = {"ResetType": "GracefulShutdown"}
     response = REDFISH_OBJ.post("/redfish/v1/Systems/1/Actions/ComputerSystem.Reset", body=body)
     if(response.is_processing):
-        task = response.monitor(context)
+        task = response.monitor(REDFISH_OBJ)
 
         while(task.is_processing):
             retry_time = task.retry_after
             task_status = task.dict['TaskState']
             time.sleep(retry_time if retry_time else 5)
-            task = response.monitor(context)
+            task = response.monitor(REDFISH_OBJ)
 
 Logout the created session
 ~~~~~~~~~~~~~~~~~~~~~~~~~~

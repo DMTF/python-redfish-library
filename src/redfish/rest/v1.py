@@ -1015,9 +1015,6 @@ class RestClientBase(object):
                         except:
                             pass
                     raise SessionCreationError('HTTP {}: Failed to created the session\n{}'.format(resp.status, error_str))
-            else:
-                self.set_username(None)
-                self.set_password(None)
         else:
             pass
 

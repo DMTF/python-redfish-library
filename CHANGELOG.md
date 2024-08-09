@@ -1,5 +1,8 @@
 # Change Log
 
+## [3.2.3] - 2024-08-09
+- Removed clearing of username and password to allow for sessions to be re-established
+
 ## [3.2.2] - 2024-01-19
 - Minor changes to fix Python 3.12 warnings with usage of raw strings
 

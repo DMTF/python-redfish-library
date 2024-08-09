@@ -1,5 +1,8 @@
 # Change Log
 
+## [3.2.4] - 2024-08-09
+- No code changes; releasing again for PyPI publication
+
 ## [3.2.3] - 2024-08-09
 - Removed clearing of username and password to allow for sessions to be re-established
 

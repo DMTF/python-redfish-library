@@ -967,6 +967,8 @@ class RestClientBase(object):
         :type auth: object/instance of class AuthMethod
 
         """
+        if getattr(self, "root_resp", None) is None:
+            self.get_root_object()
 
         self.__username = username if username else self.__username
         self.__password = password if password else self.__password

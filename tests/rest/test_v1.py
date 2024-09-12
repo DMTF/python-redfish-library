@@ -4,13 +4,15 @@
 # https://github.com/DMTF/python-redfish-library/blob/main/LICENSE.md
 
 # -*- encoding: utf-8 -*-
+import json
 import unittest
+from unittest import mock
 
 from redfish.rest.v1 import HttpClient, RetriesExhaustedError, redfish_client
 
 
 class TestRedFishClient(unittest.TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.base_url = "http://foo.bar"
         self.username = "rstallman"
         self.password = "123456"
@@ -21,7 +23,7 @@ class TestRedFishClient(unittest.TestCase):
         self.timeout = 666
         self.max_retry = 42
 
-    def test_redfish_client(self):
+    def test_redfish_client(self) -> None:
         # NOTE(hberaud) the client try to connect when we initialize the
         # http client object so we need to catch the retries exception first.
         # In a second time we need to mock the six.http_client to simulate
@@ -42,9 +44,36 @@ class TestRedFishClient(unittest.TestCase):
             self.assertEqual(client.timeout, self.timeout)
             self.assertEqual(client.max_retry, self.max_retry)
 
-    def test_redfish_client_no_root_resp(self):
+    def test_redfish_client_no_root_resp(self) -> None:
         client = redfish_client(base_url=self.base_url, check_connectivity=False)
         self.assertIsNone(getattr(client, "root_resp", None))
 
-if __name__ == '__main__':
+    @mock.patch("requests.Session.request")
+    def test_redfish_client_root_object_initialized_after_login(
+        self, mocked_request: mock.Mock
+    ) -> None:
+        dummy_root_data = '{"Links": {"Sessions": {"@data.id": "/redfish/v1/SessionService/Sessions"}}}'
+        dummy_session_response = (
+            '{"@odata.type": "#Session.v1_1_2.Session", '
+            '"@odata.id": "/redfish/v1/SessionService/Sessions/1", '
+            '"Id": "1", "Name": "User Session", "Description": "Manager User Session", '
+            '"UserName": "user", "Oem": {}}'
+        )
+        root_resp = mock.Mock(content=dummy_root_data, status_code=200)
+        auth_resp = mock.Mock(
+            content=dummy_session_response,
+            status_code=200,
+            headers={"location": "fake", "x-auth-token": "fake"},
+        )
+        mocked_request.side_effect = [
+            root_resp,
+            auth_resp,
+        ]
+        client = redfish_client(base_url=self.base_url, check_connectivity=False)
+        client.login()
+
+        self.assertEqual(client.root, json.loads(dummy_root_data))
+
+
+if __name__ == "__main__":
     unittest.main()

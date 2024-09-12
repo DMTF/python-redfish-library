@@ -477,6 +477,9 @@ class RestClientBase(object):
         :type max_retry: int
         :param proxies: Dictionary containing protocol to proxy URL mappings
         :type proxies: dict
+        :param check_connectivity: A boolean to determine whether the client immediately checks for
+        connectivity to the base_url or not.
+        :type check_connectivity: bool
 
         """
 
@@ -1069,6 +1072,9 @@ class HttpClient(RestClientBase):
         :type max_retry: int
         :param proxies: Dictionary containing protocol to proxy URL mappings
         :type proxies: dict
+        :param check_connectivity: A boolean to determine whether the client immediately checks for
+        connectivity to the base_url or not.
+        :type check_connectivity: bool
 
         """
         super(HttpClient, self).__init__(base_url, username=username,
@@ -1158,6 +1164,9 @@ def redfish_client(base_url=None, username=None, password=None,
     :type max_retry: int
     :param proxies: Dictionary containing protocol to proxy URL mappings
     :type proxies: dict
+    :param check_connectivity: A boolean to determine whether the client immediately checks for
+    connectivity to the base_url or not.
+    :type check_connectivity: bool
     :returns: a client object.
 
     """

@@ -91,6 +91,7 @@ There are several optional parameters:
 * ``timeout``: The number of seconds to wait for a response before closing the connection.  The default value is ``None``.
 * ``max_retry``: The number of retries to perform an operation before giving up.  The default value is ``10``.
 * ``proxies``: A dictionary containing protocol to proxy URL mappings.  The default value is ``None``.  See `Using proxies`_.
+* ``check_connectivity``: A boolean value to determine whether the client immediately attempts a connection to the base_url. The default is ``True``.
 
 To create a Redfish object, call the ``redfish_client`` method:
 

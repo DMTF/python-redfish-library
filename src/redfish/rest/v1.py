@@ -454,7 +454,7 @@ class RestClientBase(object):
     def __init__(self, base_url, username=None, password=None,
                                 default_prefix='/redfish/v1/', sessionkey=None,
                                 capath=None, cafile=None, timeout=None,
-                                max_retry=None, proxies=None):
+                                max_retry=None, proxies=None, check_connectivity=True):
         """Initialization of the base class RestClientBase
 
         :param base_url: The URL of the remote system
@@ -477,6 +477,9 @@ class RestClientBase(object):
         :type max_retry: int
         :param proxies: Dictionary containing protocol to proxy URL mappings
         :type proxies: dict
+        :param check_connectivity: A boolean to determine whether the client immediately checks for
+        connectivity to the base_url or not.
+        :type check_connectivity: bool
 
         """
 
@@ -497,7 +500,9 @@ class RestClientBase(object):
         self.default_prefix = default_prefix
         self.capath = capath
         self.cafile = cafile
-        self.get_root_object()
+
+        if check_connectivity:
+            self.get_root_object()
 
     def __enter__(self):
         self.login()
@@ -965,6 +970,8 @@ class RestClientBase(object):
         :type auth: object/instance of class AuthMethod
 
         """
+        if getattr(self, "root_resp", None) is None:
+            self.get_root_object()
 
         self.__username = username if username else self.__username
         self.__password = password if password else self.__password
@@ -999,7 +1006,7 @@ class RestClientBase(object):
             message_item = search_message(resp, "Base", "PasswordChangeRequired")
             if not message_item is None:
                 raise RedfishPasswordChangeRequiredError("Password Change Required\n", message_item["MessageArgs"][0])
-            
+
             if not self.__session_key and resp.status not in [200, 201, 202, 204]:
                 if resp.status == 401:
                     # Invalid credentials supplied
@@ -1042,7 +1049,7 @@ class HttpClient(RestClientBase):
                                 default_prefix='/redfish/v1/',
                                 sessionkey=None, capath=None,
                                 cafile=None, timeout=None,
-                                max_retry=None, proxies=None):
+                                max_retry=None, proxies=None, check_connectivity=True):
         """Initialize HttpClient
 
         :param base_url: The url of the remote system
@@ -1065,17 +1072,21 @@ class HttpClient(RestClientBase):
         :type max_retry: int
         :param proxies: Dictionary containing protocol to proxy URL mappings
         :type proxies: dict
+        :param check_connectivity: A boolean to determine whether the client immediately checks for
+        connectivity to the base_url or not.
+        :type check_connectivity: bool
 
         """
         super(HttpClient, self).__init__(base_url, username=username,
                             password=password, default_prefix=default_prefix,
                             sessionkey=sessionkey, capath=capath,
                             cafile=cafile, timeout=timeout,
-                            max_retry=max_retry, proxies=proxies)
+                            max_retry=max_retry, proxies=proxies,
+                            check_connectivity=check_connectivity)
 
         try:
             self.login_url = self.root.Links.Sessions['@odata.id']
-        except KeyError:
+        except (KeyError, AttributeError):
             # While the "Links/Sessions" property is required, we can fallback
             # on the URI hardened in 1.6.0 of the specification if not found
             LOGGER.debug('"Links/Sessions" not found in Service Root.')
@@ -1128,7 +1139,7 @@ def redfish_client(base_url=None, username=None, password=None,
                                 default_prefix='/redfish/v1/',
                                 sessionkey=None, capath=None,
                                 cafile=None, timeout=None,
-                                max_retry=None, proxies=None):
+                                max_retry=None, proxies=None, check_connectivity=True):
     """Create and return appropriate REDFISH client instance."""
     """ Instantiates appropriate Redfish object based on existing"""
     """ configuration. Use this to retrieve a pre-configured Redfish object
@@ -1153,6 +1164,9 @@ def redfish_client(base_url=None, username=None, password=None,
     :type max_retry: int
     :param proxies: Dictionary containing protocol to proxy URL mappings
     :type proxies: dict
+    :param check_connectivity: A boolean to determine whether the client immediately checks for
+    connectivity to the base_url or not.
+    :type check_connectivity: bool
     :returns: a client object.
 
     """
@@ -1162,4 +1176,4 @@ def redfish_client(base_url=None, username=None, password=None,
     return HttpClient(base_url=base_url, username=username, password=password,
                         default_prefix=default_prefix, sessionkey=sessionkey,
                         capath=capath, cafile=cafile, timeout=timeout,
-                        max_retry=max_retry, proxies=proxies)
+                        max_retry=max_retry, proxies=proxies, check_connectivity=check_connectivity)

@@ -1,5 +1,8 @@
 # Change Log
 
+## [3.2.5] - 2024-09-13
+- Added new 'check_connectivity' option when creating the client object
+
 ## [3.2.4] - 2024-08-09
 - No code changes; releasing again for PyPI publication
 

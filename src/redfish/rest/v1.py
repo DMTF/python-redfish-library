@@ -596,6 +596,13 @@ class RestClientBase(object):
         except Exception as excp:
             raise excp
 
+        if resp.status == 401 and self.__authorization_key is None and self.__session_key is None:
+            # Workaround where the service incorrectly rejects access to service
+            # root when no credentials are provided
+            warnings.warn("Service incorrectly responded with HTTP 401 Unauthorized for the service root.  Contact your vendor.")
+            self.root = {}
+            self.root_resp = resp
+            return
         if resp.status != 200:
             raise ServerDownOrUnreachableError("Server not reachable, " \
                                                "return code: %d" % resp.status,response=resp)

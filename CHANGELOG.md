@@ -1,5 +1,8 @@
 # Change Log
 
+## [3.2.6] - 2024-11-15
+- Added workaround for services incorrectly responding with 401 when accessing the service root
+
 ## [3.2.5] - 2024-09-13
 - Added new 'check_connectivity' option when creating the client object
 

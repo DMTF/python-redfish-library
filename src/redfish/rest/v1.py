@@ -955,7 +955,7 @@ class RestClientBase(object):
                                  (restresp.request.path,
                                 str(restresp._http_response.status_code)+ ' ' + \
                                 restresp._http_response.reason,
-                                headerstr, restresp.request.path, restresp.read))
+                                headerstr, restresp.request.path, json.dumps(json.loads(restresp.read), indent=4)))
                     except:
                         LOGGER.debug('HTTP RESPONSE:\nCode:%s', restresp)
                 else:

@@ -951,7 +951,7 @@ class RestClientBase(object):
 
                     try:
                         LOGGER.debug('HTTP RESPONSE for %s:\nCode: %s\n\nHeaders:\n' \
-                                 '%s\nBody Response of %s: %s\n'%\
+                                 '%s\nBody Response of %s:\n%s\n'%\
                                  (restresp.request.path,
                                 str(restresp._http_response.status_code)+ ' ' + \
                                 restresp._http_response.reason,

@@ -950,12 +950,16 @@ class RestClientBase(object):
                         headerstr += '\t' + header[0] + ': ' + header[1] + '\n'
 
                     try:
+                        try:
+                            restrespstr = json.dumps(json.loads(restresp.read), indent=4)
+                        except:
+                            restrespstr = restresp.read
                         LOGGER.debug('HTTP RESPONSE for %s:\nCode: %s\n\nHeaders:\n' \
                                  '%s\nBody Response of %s:\n%s\n'%\
                                  (restresp.request.path,
                                 str(restresp._http_response.status_code)+ ' ' + \
                                 restresp._http_response.reason,
-                                headerstr, restresp.request.path, json.dumps(json.loads(restresp.read), indent=4)))
+                                headerstr, restresp.request.path, restrespstr))
                     except:
                         LOGGER.debug('HTTP RESPONSE:\nCode:%s', restresp)
                 else:

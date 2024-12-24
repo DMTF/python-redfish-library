@@ -1,5 +1,8 @@
 # Change Log
 
+## [3.2.7] - 2024-12-24
+- Added JSON formatting of responses to debug logs
+
 ## [3.2.6] - 2024-11-15
 - Added workaround for services incorrectly responding with 401 when accessing the service root
 

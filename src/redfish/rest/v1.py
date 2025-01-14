@@ -249,6 +249,10 @@ class RestResponse(object):
     def dict(self):
         """Property for accessing the data as an dict"""
         try:
+            if len(self.text) == 0:
+                # No response body; return empty dict instead to avoid exceptions
+                # No response bodies can be valid in many cases (especially 4XX and 5XX responses)
+                return {}
             return json.loads(self.text)
         except:
             str = "Service responded with invalid JSON at URI {}\n{}".format(

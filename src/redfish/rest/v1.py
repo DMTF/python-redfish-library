@@ -255,6 +255,10 @@ class RestResponse(object):
                 return {}
             return json.loads(self.text)
         except:
+            if self.status == 500:
+                # Make an allowance for 500 status codes
+                # Depending on the reason for the error, it's possible the web server may not be able to support Redfish handling
+                return {}
             str = "Service responded with invalid JSON at URI {}\n{}".format(
                 self._rest_request.path, self.text)
             LOGGER.error(str)

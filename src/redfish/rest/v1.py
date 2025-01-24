@@ -249,8 +249,16 @@ class RestResponse(object):
     def dict(self):
         """Property for accessing the data as an dict"""
         try:
+            if len(self.text) == 0:
+                # No response body; return empty dict instead to avoid exceptions
+                # No response bodies can be valid in many cases (especially 4XX and 5XX responses)
+                return {}
             return json.loads(self.text)
         except:
+            if self.status == 500:
+                # Make an allowance for 500 status codes
+                # Depending on the reason for the error, it's possible the web server may not be able to support Redfish handling
+                return {}
             str = "Service responded with invalid JSON at URI {}\n{}".format(
                 self._rest_request.path, self.text)
             LOGGER.error(str)

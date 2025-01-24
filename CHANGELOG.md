@@ -1,5 +1,8 @@
 # Change Log
 
+## [3.2.8] - 2025-01-24
+- Updated 'dict' handling for responses without a body and 500 responses with a non-JSON body to use an empty dictionary
+
 ## [3.2.7] - 2024-12-24
 - Added JSON formatting of responses to debug logs
 

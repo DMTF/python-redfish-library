@@ -977,7 +977,7 @@ class RestClientBase(object):
         else:
             raise RetriesExhaustedError() from cause_exception
 
-    def login(self, username=None, password=None, auth=AuthMethod.SESSION):
+    def login(self, username=None, password=None, auth=AuthMethod.SESSION, headers=()):
         """Login and start a REST session.  Remember to call logout() when"""
         """ you are done.
 
@@ -987,6 +987,8 @@ class RestClientBase(object):
         :type password: str.
         :param auth: authentication method
         :type auth: object/instance of class AuthMethod
+        :param headers: Additional HTTP headers to provide in the request
+        :type headers: dict, optional
 
         """
         if getattr(self, "root_resp", None) is None:
@@ -1000,7 +1002,6 @@ class RestClientBase(object):
                             self.__password)).encode('utf-8')).decode('utf-8')
             self.__authorization_key = 'Basic %s' % auth_key
 
-            headers = dict()
             headers['Authorization'] = self.__authorization_key
 
             respvalidate = self._rest_request(self.login_url, headers=headers)
@@ -1013,7 +1014,6 @@ class RestClientBase(object):
             data['UserName'] = self.__username
             data['Password'] = self.__password
 
-            headers = dict()
             resp = self._rest_request(self.login_url, method="POST",body=data,
                                       headers=headers, allow_redirects=False)
 

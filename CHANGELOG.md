@@ -1,5 +1,9 @@
 # Change Log
 
+## [3.2.9] - 2025-03-07
+- Added optional 'headers' argument to the 'login' method
+- Clarified exception message when raising 'ServerDownOrUnreachableError'
+
 ## [3.2.8] - 2025-01-24
 - Updated 'dict' handling for responses without a body and 500 responses with a non-JSON body to use an empty dictionary
 

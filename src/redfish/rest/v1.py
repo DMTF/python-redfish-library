@@ -611,8 +611,11 @@ class RestClientBase(object):
             self.root = {}
             self.root_resp = resp
             return
+        if resp.status == 503:
+            raise ServerDownOrUnreachableError("Service is busy, " \
+                                               "return code: %d" % resp.status,response=resp)
         if resp.status != 200:
-            raise ServerDownOrUnreachableError("Server not reachable, " \
+            raise ServerDownOrUnreachableError("Service not able to provide the service root, " \
                                                "return code: %d" % resp.status,response=resp)
 
         content = resp.text

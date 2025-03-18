@@ -1043,7 +1043,7 @@ class RestClientBase(object):
                             error_str = resp.dict["error"]["message"]
                         except:
                             pass
-                    raise SessionCreationError('HTTP {}: Failed to created the session\n{}'.format(resp.status, error_str))
+                    raise SessionCreationError('HTTP {}: Failed to create the session\n{}'.format(resp.status, error_str))
         else:
             pass
 

@@ -290,6 +290,10 @@ class RestResponse(object):
             return self._session_location
 
         self._session_location = self.getheader('location')
+        if self._session_location is None:
+            warnings.warn("Service incorrectly did not provide the 'Location' response header when creating a session; attempting to "
+                          "get the session location from the response body.  Contact your vendor.")
+            self._session_location = self.dict["@odata.id"]
         return self._session_location
 
     @property

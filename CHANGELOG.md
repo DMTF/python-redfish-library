@@ -1,5 +1,9 @@
 # Change Log
 
+## [3.3.0] - 2025-03-21
+- Added workaround and warnings for session login when the service incorrectly does not provide the session location in the 'Location' response header
+- Minor typo fix in exception message for login failures
+
 ## [3.2.9] - 2025-03-07
 - Added optional 'headers' argument to the 'login' method
 - Clarified exception message when raising 'ServerDownOrUnreachableError'

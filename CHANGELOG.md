@@ -1,5 +1,8 @@
 # Change Log
 
+## [3.3.1] - 2025-03-28
+- Fixed bug in recent workaround logic for services not returning the 'Location' header to not print the workaround warning for failed login attempts
+
 ## [3.3.0] - 2025-03-21
 - Added workaround and warnings for session login when the service incorrectly does not provide the session location in the 'Location' response header
 - Minor typo fix in exception message for login failures

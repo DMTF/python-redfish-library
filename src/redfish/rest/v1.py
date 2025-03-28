@@ -288,6 +288,8 @@ class RestResponse(object):
         """Property for accessing the saved session location"""
         if self._session_location:
             return self._session_location
+        if self.status not in [200, 201, 202, 204]:
+            return None
 
         self._session_location = self.getheader('location')
         if self._session_location is None:

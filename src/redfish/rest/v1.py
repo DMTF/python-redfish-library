@@ -986,7 +986,7 @@ class RestClientBase(object):
         else:
             raise RetriesExhaustedError() from cause_exception
 
-    def login(self, username=None, password=None, auth=AuthMethod.SESSION, headers={}):
+    def login(self, username=None, password=None, auth=AuthMethod.SESSION, headers=None):
         """Login and start a REST session.  Remember to call logout() when"""
         """ you are done.
 
@@ -1005,6 +1005,8 @@ class RestClientBase(object):
 
         self.__username = username if username else self.__username
         self.__password = password if password else self.__password
+
+        headers = headers if headers else {}
 
         if auth == AuthMethod.BASIC:
             auth_key = base64.b64encode(('%s:%s' % (self.__username,

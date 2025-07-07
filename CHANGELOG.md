@@ -1,5 +1,8 @@
 # Change Log
 
+## [3.3.2] - 2025-07-07
+- Fixed issue where headers were being propagated across different class instances
+
 ## [3.3.1] - 2025-03-28
 - Fixed bug in recent workaround logic for services not returning the 'Location' header to not print the workaround warning for failed login attempts
 

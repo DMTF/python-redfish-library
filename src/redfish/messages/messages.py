@@ -136,8 +136,8 @@ def get_error_messages( response ):
         if "@Message.ExtendedInfo" in messages_detail:
             for message in messages_detail["@Message.ExtendedInfo"]:
                 if "Message" in message:
-                    out_string = out_string + "\n" + message["Message"]
-            else:
+                    out_string = out_string + "\n" + message["MessageId"] + ": " + message["Message"]
+                else:
                     out_string = out_string + "\n" + message["MessageId"]
         out_string = out_string + "\n"
     except:

@@ -1,5 +1,8 @@
 # Change Log
 
+## [3.3.3] - 2025-07-25
+- Fixed formatting of error message string construction
+
 ## [3.3.2] - 2025-07-07
 - Fixed issue where headers were being propagated across different class instances
 

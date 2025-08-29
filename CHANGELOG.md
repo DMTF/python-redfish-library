@@ -1,5 +1,8 @@
 # Change Log
 
+## [3.3.4] - 2025-08-29
+- Added option to allow for a user to specify an HTTPS adapter when building the client object
+
 ## [3.3.3] - 2025-07-25
 - Fixed formatting of error message string construction
 

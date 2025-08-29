@@ -468,7 +468,8 @@ class RestClientBase(object):
     def __init__(self, base_url, username=None, password=None,
                                 default_prefix='/redfish/v1/', sessionkey=None,
                                 capath=None, cafile=None, timeout=None,
-                                max_retry=None, proxies=None, check_connectivity=True):
+                                max_retry=None, proxies=None, check_connectivity=True,
+                                https_adapter = None):
         """Initialization of the base class RestClientBase
 
         :param base_url: The URL of the remote system
@@ -494,7 +495,7 @@ class RestClientBase(object):
         :param check_connectivity: A boolean to determine whether the client immediately checks for
         connectivity to the base_url or not.
         :type check_connectivity: bool
-
+        :type https_adapter: requests.adpaters.HTTPAdapter
         """
 
         self.__base_url = base_url.rstrip('/')
@@ -507,6 +508,8 @@ class RestClientBase(object):
             self._session = requests_unixsocket.Session()
         else:
             self._session = requests.Session()
+            if https_adapter:
+                self._session.mount('https://',https_adapter)
         self._timeout = timeout
         self._max_retry = max_retry if max_retry is not None else 10
         self._proxies = proxies
@@ -1079,7 +1082,8 @@ class HttpClient(RestClientBase):
                                 default_prefix='/redfish/v1/',
                                 sessionkey=None, capath=None,
                                 cafile=None, timeout=None,
-                                max_retry=None, proxies=None, check_connectivity=True):
+                                max_retry=None, proxies=None, check_connectivity=True,
+                                https_adapter=None):
         """Initialize HttpClient
 
         :param base_url: The url of the remote system
@@ -1105,14 +1109,15 @@ class HttpClient(RestClientBase):
         :param check_connectivity: A boolean to determine whether the client immediately checks for
         connectivity to the base_url or not.
         :type check_connectivity: bool
-
+        :param https_adapter session adapter for HTTPS
+        :type https_adapter: requests.adpaters.HTTPAdapter
         """
         super(HttpClient, self).__init__(base_url, username=username,
                             password=password, default_prefix=default_prefix,
                             sessionkey=sessionkey, capath=capath,
                             cafile=cafile, timeout=timeout,
                             max_retry=max_retry, proxies=proxies,
-                            check_connectivity=check_connectivity)
+                            check_connectivity=check_connectivity,https_adapter=https_adapter)
 
         try:
             self.login_url = self.root.Links.Sessions['@odata.id']
@@ -1169,7 +1174,8 @@ def redfish_client(base_url=None, username=None, password=None,
                                 default_prefix='/redfish/v1/',
                                 sessionkey=None, capath=None,
                                 cafile=None, timeout=None,
-                                max_retry=None, proxies=None, check_connectivity=True):
+                                max_retry=None, proxies=None, check_connectivity=True,
+                                https_adapter=None):
     """Create and return appropriate REDFISH client instance."""
     """ Instantiates appropriate Redfish object based on existing"""
     """ configuration. Use this to retrieve a pre-configured Redfish object
@@ -1196,14 +1202,17 @@ def redfish_client(base_url=None, username=None, password=None,
     :type proxies: dict
     :param check_connectivity: A boolean to determine whether the client immediately checks for
     connectivity to the base_url or not.
-    :type check_connectivity: bool
+    :type check_connectivity: bo#ol
+    :param https_adapter session adapter for HTTPS
+    :type https_adapter: requests.adpaters.HTTPAdapter
     :returns: a client object.
 
     """
     if "://" not in base_url:
-        warnings.warn("Scheme not specified for '{}'; adding 'https://'".format(base_url))
-        base_url = "https://" + base_url
+            warnings.warn("Scheme not specified for '{}'; adding 'https://'".format(base_url))
+            base_url = "https://" + base_url
     return HttpClient(base_url=base_url, username=username, password=password,
                         default_prefix=default_prefix, sessionkey=sessionkey,
                         capath=capath, cafile=cafile, timeout=timeout,
-                        max_retry=max_retry, proxies=proxies, check_connectivity=check_connectivity)
+                        max_retry=max_retry, proxies=proxies, check_connectivity=check_connectivity,
+                        https_adapter=https_adapter)

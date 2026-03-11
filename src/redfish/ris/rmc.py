@@ -19,7 +19,7 @@ from collections import OrderedDict
 from collections.abc import Mapping
 
 import jsonpatch
-import jsonpath_rw
+import jsonpath_ng
 import jsonpointer
                      
 from redfish.ris.rmc_helper import (UndefinedClientError, \
@@ -384,7 +384,7 @@ class RmcApp(object):
                 currdict = jsonpatch.apply_patch(currdict, patch)
 
             if selector:
-                jsonpath_expr = jsonpath_rw.parse('%s' % selector)
+                jsonpath_expr = jsonpath_ng.parse('%s' % selector)
                 matches = jsonpath_expr.find(currdict)
                 temp_dict = OrderedDict()
 
@@ -440,7 +440,7 @@ class RmcApp(object):
                         break
 
                 try:
-                    jsonpath_expr = jsonpath_rw.parse('"%s"' % selector)
+                    jsonpath_expr = jsonpath_ng.parse('"%s"' % selector)
                 except Exception as excp:
                     raise InvalidCommandLineError(excp)
 
@@ -516,7 +516,7 @@ class RmcApp(object):
                         break
 
                 newdict = currdict.copy()
-                jsonpath_expr = jsonpath_rw.parse(u'%s' % selector)
+                jsonpath_expr = jsonpath_ng.parse(u'%s' % selector)
                 matches = jsonpath_expr.find(currdict)
 
                 if not matches:
@@ -730,7 +730,7 @@ class RmcApp(object):
                 dicttolist = []
 
             for (itersel, iterval) in dicttolist:
-                jsonpath_expr = jsonpath_rw.parse('%s' % itersel)
+                jsonpath_expr = jsonpath_ng.parse('%s' % itersel)
                 matches = jsonpath_expr.find(currdict)
 
                 if not matches:

@@ -29,7 +29,7 @@ setup(name='redfish',
       packages=find_packages('src'),
       package_dir={'': 'src'},
       install_requires=[
-          'jsonpath_rw',
+          'jsonpath_ng',
           'jsonpointer',
           "requests",
           'requests_toolbelt',

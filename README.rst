@@ -46,7 +46,7 @@ Required external packages:
 
     jsonpatch<=1.24 ; python_version == '3.4'
     jsonpatch ; python_version >= '3.5'
-    jsonpath_rw
+    jsonpath_ng
     jsonpointer
     requests
     requests-toolbelt

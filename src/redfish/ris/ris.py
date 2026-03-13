@@ -15,7 +15,7 @@ import threading
 from queue import Queue
 from collections import OrderedDict
 
-import jsonpath_rw
+import jsonpath_ng
 
 import redfish.rest.v1
 from redfish.ris.sharedtypes import Dictable
@@ -406,7 +406,7 @@ class RisMonolith_v1_0_0(Dictable):
 
         if loadtype == "href":
             # follow all the href attributes
-            jsonpath_expr = jsonpath_rw.parse("$..'@odata.id'")
+            jsonpath_expr = jsonpath_ng.parse("$..'@odata.id'")
             matches = jsonpath_expr.find(resp.dict)
 
             if "links" in resp.dict and "NextPage" in resp.dict["links"]:

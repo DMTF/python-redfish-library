@@ -10,7 +10,6 @@
 import os
 import re
 import sys
-import six
 import time
 import copy
 import shutil
@@ -19,7 +18,7 @@ from collections import OrderedDict
 from collections.abc import Mapping
 
 import jsonpatch
-import jsonpath_rw
+import jsonpath_ng
 import jsonpointer
                      
 from redfish.ris.rmc_helper import (UndefinedClientError, \
@@ -384,7 +383,7 @@ class RmcApp(object):
                 currdict = jsonpatch.apply_patch(currdict, patch)
 
             if selector:
-                jsonpath_expr = jsonpath_rw.parse('%s' % selector)
+                jsonpath_expr = jsonpath_ng.parse('%s' % selector)
                 matches = jsonpath_expr.find(currdict)
                 temp_dict = OrderedDict()
 
@@ -434,13 +433,13 @@ class RmcApp(object):
                 currdict = jsonpatch.apply_patch(currdict, patch)
 
             if selector:
-                for item in six.iterkeys(currdict):
+                for item in currdict:
                     if selector.lower() == item.lower():
                         selector = item
                         break
 
                 try:
-                    jsonpath_expr = jsonpath_rw.parse('"%s"' % selector)
+                    jsonpath_expr = jsonpath_ng.parse('"%s"' % selector)
                 except Exception as excp:
                     raise InvalidCommandLineError(excp)
 
@@ -510,13 +509,13 @@ class RmcApp(object):
                     nochangesmade = True
 
                 currdict = instance.resp.dict
-                for item in six.iterkeys(currdict):
+                for item in currdict:
                     if selector.lower() == item.lower():
                         selector = item
                         break
 
                 newdict = currdict.copy()
-                jsonpath_expr = jsonpath_rw.parse(u'%s' % selector)
+                jsonpath_expr = jsonpath_ng.parse(u'%s' % selector)
                 matches = jsonpath_expr.find(currdict)
 
                 if not matches:
@@ -678,7 +677,7 @@ class RmcApp(object):
 
             if newargs and len(dicttolist)==1 :
                 for i in range(len(newargs)):
-                    for item in six.iterkeys(currdictcopy):
+                    for item in currdictcopy:
                         if newarg[i].lower() == item.lower():
                             newarg[i] = item
 
@@ -730,7 +729,7 @@ class RmcApp(object):
                 dicttolist = []
 
             for (itersel, iterval) in dicttolist:
-                jsonpath_expr = jsonpath_rw.parse('%s' % itersel)
+                jsonpath_expr = jsonpath_ng.parse('%s' % itersel)
                 matches = jsonpath_expr.find(currdict)
 
                 if not matches:
@@ -847,7 +846,7 @@ class RmcApp(object):
                 newarg.append(name)
 
                 for i in range(len(newargs)):
-                    for item in six.iterkeys(currdictcopy):
+                    for item in currdictcopy:
                         if newarg[i].lower() == item.lower():
                             selector = item
                             newarg[i] = item
@@ -932,7 +931,7 @@ class RmcApp(object):
         found = False
 
         if not newargs[current] == newargs[-1]:
-            for attr, val in six.iteritems(currdict):
+            for attr, val in currdict.items():
                 if attr.lower() == newargs[current].lower():
                     current += 1
                     found = self.setmultiworker(newargs, change, val, current)
@@ -940,7 +939,7 @@ class RmcApp(object):
                 else:
                     continue
         else:
-            for attr, val in six.iteritems(currdict):
+            for attr, val in currdict.items():
                 if attr.lower() == change[0][0].lower():
                     currdict[attr] = change[0][1]
                     found = True

@@ -17,7 +17,7 @@ Description
 
 As of version 3.0.0, Python2 is no longer supported.  If Python2 is required, ``redfish<3.0.0`` can be specified in a requirements file.
 
-REST (Representational State Transfer) is a web based software architectural style consisting of a set of constraints that focuses on a system's resources.  The Redfish library performs GET, POST, PUT, PATCH and DELETE HTTP operations on resources within a Redfish service.  Go to the `wiki <../../wiki>`_ for more details.
+REST (Representational State Transfer) is a web based software architectural style consisting of a set of constraints that focuses on a system's resources.  The Redfish library performs GET, POST, PUT, PATCH and DELETE HTTP operations on resources within a Redfish service.  Go to the `wiki <https://github.com/DMTF/python-redfish-library/wiki>`_ for more details.
 
 Installing
 ----------
@@ -46,7 +46,7 @@ Required external packages:
 
     jsonpatch<=1.24 ; python_version == '3.4'
     jsonpatch ; python_version >= '3.5'
-    jsonpath_rw
+    jsonpath_ng
     jsonpointer
     requests
     requests-toolbelt

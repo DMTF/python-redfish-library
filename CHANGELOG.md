@@ -1,5 +1,8 @@
 # Change Log
 
+## [3.3.5] - 2026-03-13
+- Replaced jsonpath_rw in favor of jsonpath_ng
+
 ## [3.3.4] - 2025-08-29
 - Added option to allow for a user to specify an HTTPS adapter when building the client object
 

@@ -5,3 +5,4 @@ jsonpointer
 requests
 requests-toolbelt
 requests-unixsocket
+urllib3[zstd]>=2.6.0 ; python_version >= '3.9'

@@ -4,8 +4,10 @@ cache:
 - pip
 python:
 - '3.8'
-- '3.9'
 - '3.11'
+- '3.12'
+- '3.13'
+- '3.14'
 before_install:
 - pip install -U pip
 - pip install -U setuptools

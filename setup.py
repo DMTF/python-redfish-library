@@ -41,5 +41,8 @@ setup(name='redfish',
           ],
           ':python_version >= "3.5"': [
               'jsonpatch'
+          ],
+          ':python_version >= "3.9"': [
+              'urllib3[zstd]>=2.6.0'
           ]
       })

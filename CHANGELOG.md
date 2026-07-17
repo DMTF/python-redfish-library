@@ -1,5 +1,8 @@
 # Change Log
 
+## [3.3.6] - 2026-07-17
+- Added urllib3 zstd extra to requirements
+
 ## [3.3.5] - 2026-03-13
 - Replaced jsonpath_rw in favor of jsonpath_ng
 

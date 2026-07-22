@@ -746,7 +746,7 @@ class RestClientBase(object):
         return self._rest_request(path, method='PATCH', args=args, body=body,
                                                                 headers=headers, timeout=timeout, max_retry=max_retry)
 
-    def delete(self, path, args=None, headers=None, timeout=None, max_retry=None):
+    def delete(self, path, args=None, headers=None, timeout=None, max_retry=None, body=None):
         """Perform a DELETE request
 
         :param path: The URI to access
@@ -759,10 +759,12 @@ class RestClientBase(object):
         :type timeout: int, optional
         :param max_retry: Number of times a request will retry after a timeout for this specific request
         :type max_retry: int, optional
+        :param body: The request body to provide; use a dict for a JSON body, list for multipart forms, bytes for an octet stream, or str for an unstructured request
+        :type body: dict or list or bytes or str, optional
         :returns: returns a rest request with method 'Delete'
 
         """
-        return self._rest_request(path, method='DELETE', args=args,
+        return self._rest_request(path, method='DELETE', args=args, body=body,
                                                                 headers=headers, timeout=timeout, max_retry=max_retry)
 
     def _get_req_headers(self, headers=None):

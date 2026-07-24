@@ -1,5 +1,8 @@
 # Change Log
 
+## [3.3.7] - 2026-07-24
+- Added missing optional request body for DELETE operations
+
 ## [3.3.6] - 2026-07-17
 - Added urllib3 zstd extra to requirements
 

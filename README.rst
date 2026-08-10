@@ -26,6 +26,12 @@ Installing
 
     pip install redfish
 
+The asynchronous client has an optional ``aiohttp`` dependency:
+
+.. code-block:: console
+
+    pip install redfish[aiohttp]
+
 Building from zip file source
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -51,6 +57,8 @@ Required external packages:
     requests
     requests-toolbelt
     requests-unixsocket
+
+The optional asynchronous client requires ``aiohttp>=3.9.0``.
 
 If installing from GitHub, you may install the external packages by running:
 
@@ -182,6 +190,48 @@ Each of the previous methods allows for the following arguments:
   - Overrides the max retry value specified when the Redfish object is created for this request.
   - This can be useful when a particular URI is known to take multiple retries.
   - The default value is ``None``, which indicates the object-defined max retry count is used.
+
+Asynchronous client
+~~~~~~~~~~~~~~~~~~~
+
+The additive asynchronous API uses ``aiohttp`` and does not change the existing synchronous client.  The caller must provide an ``aiohttp.ClientSession`` and remains responsible for closing it.  This allows an application to control connection pooling, TLS trust, proxy behavior, and session lifetime in one place.
+
+The asynchronous client currently supports HTTP Basic authentication.  It does not create a Redfish session or require a separate login call.  Requests do not follow redirects, and advertised resource or action targets are accepted only when they resolve to the configured Redfish origin.  These rules prevent credentials from being sent to another origin.
+
+.. code-block:: python
+
+    import aiohttp
+
+    from redfish.aio import AsyncRedfishClient
+
+
+    async def get_systems():
+        async with aiohttp.ClientSession() as session:
+            client = AsyncRedfishClient(
+                base_url="https://bmc.example",
+                username="user",
+                password="password",
+                session=session,
+                timeout=10,
+                discovery_timeout=60,
+            )
+
+            service_root = await client.get_service_root()
+            systems = await client.get_systems()
+            return service_root, systems
+
+``get``, ``head``, ``post``, ``put``, ``patch``, and ``delete`` are coroutines with the same ``path``, ``args``, ``body``, ``headers``, and ``timeout`` concepts as the synchronous methods.  The returned response is fully read and cached before the coroutine returns, so it can be inspected after the underlying aiohttp response closes.
+
+``get_systems`` follows the standard ServiceRoot ``Systems`` link, collection pagination, ComputerSystem member links, and reset ActionInfo resources.  It returns ``ComputerSystem`` objects containing standard identity, metadata, power state, reset target, and advertised standard reset types.  ``reset_system`` sends an advertised reset type to that system's advertised reset target:
+
+.. code-block:: python
+
+    systems = await client.get_systems()
+    system = systems["1"]
+    if "On" in system.reset_types:
+        await client.reset_system(system, "On")
+
+The optional request ``timeout`` bounds each HTTP request.  ``discovery_timeout`` defaults to 60 seconds and bounds the complete ServiceRoot, collection, member, and ActionInfo discovery operation.  TLS verification is controlled entirely by the injected ``ClientSession``.  Configure that session with an appropriate CA certificate or SSL context for a Redfish service using a private or self-signed certificate.
 
 Working with tasks
 ~~~~~~~~~~~~~~~~~~

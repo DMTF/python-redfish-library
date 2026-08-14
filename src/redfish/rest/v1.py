@@ -963,7 +963,7 @@ class RestClientBase(object):
             else:
                 break
 
-        if attempts <= self._max_retry:
+        if attempts <= max_retry:
             if LOGGER.isEnabledFor(logging.DEBUG):
                 headerstr = ''
 

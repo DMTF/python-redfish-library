@@ -1,5 +1,8 @@
 # Change Log
 
+## [3.3.8] - 2026-08-14
+- Fixed usage of 'max_retry' when attempting to raise the 'RetriesExhaustedError' exception
+
 ## [3.3.7] - 2026-07-24
 - Added missing optional request body for DELETE operations
 

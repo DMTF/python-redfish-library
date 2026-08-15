@@ -63,8 +63,6 @@ class TestAsyncRedfishClient(unittest.IsolatedAsyncioTestCase):
         self.session = aiohttp.ClientSession()
         self.client = AsyncRedfishClient(
             base_url=str(self.server.make_url("/")),
-            username="user",
-            password="password",
             session=self.session,
         )
 
@@ -94,10 +92,8 @@ class TestAsyncRedfishClient(unittest.IsolatedAsyncioTestCase):
                     "method": "GET",
                     "path_qs": "/resource?query=value",
                     "body": None,
-                    "authorization": "Basic dXNlcjpwYXNzd29yZA==",
-                    "authorization_all": [
-                        "Basic dXNlcjpwYXNzd29yZA=="
-                    ],
+                    "authorization": None,
+                    "authorization_all": [],
                     "accept": "*/*",
                     "odata_version": "4.0",
                     "custom": "header",
@@ -105,14 +101,13 @@ class TestAsyncRedfishClient(unittest.IsolatedAsyncioTestCase):
             ],
         )
 
-    async def test_headers_are_case_insensitive_and_auth_is_protected(self):
-        """Test custom headers cannot duplicate or replace Basic auth."""
+    async def test_headers_are_case_insensitive(self):
+        """Test custom headers replace default headers case-insensitively."""
         await self.client.get(
             "/resource",
             headers={
                 "accept": "application/json",
                 "odata-version": "4.01",
-                "authorization": "Bearer untrusted",
             },
         )
 
@@ -122,10 +117,8 @@ class TestAsyncRedfishClient(unittest.IsolatedAsyncioTestCase):
                 "method": "GET",
                 "path_qs": "/resource",
                 "body": None,
-                "authorization": "Basic dXNlcjpwYXNzd29yZA==",
-                "authorization_all": [
-                    "Basic dXNlcjpwYXNzd29yZA=="
-                ],
+                "authorization": None,
+                "authorization_all": [],
                 "accept": "application/json",
                 "odata_version": "4.01",
                 "custom": None,
@@ -259,8 +252,6 @@ class TestAsyncRedfishClient(unittest.IsolatedAsyncioTestCase):
         self.addAsyncCleanup(redirect_server.close)
         redirect_client = AsyncRedfishClient(
             base_url=str(redirect_server.make_url("/")),
-            username="user",
-            password="password",
             session=self.session,
         )
 
@@ -273,8 +264,6 @@ class TestAsyncRedfishClient(unittest.IsolatedAsyncioTestCase):
         """Test default timeouts and per-request overrides."""
         client = AsyncRedfishClient(
             base_url=str(self.server.make_url("/")),
-            username="user",
-            password="password",
             session=self.session,
             timeout=0.01,
         )
@@ -306,7 +295,6 @@ class TestAsyncRedfishClient(unittest.IsolatedAsyncioTestCase):
             {"base_url": "https://bmc.example"},
             {**valid, "username": "user"},
             {**valid, "password": "password"},
-            {**valid, "username": "invalid:user", "password": "password"},
             {**valid, "timeout": -1},
             {**valid, "timeout": "invalid"},
             {**valid, "discovery_timeout": -1},

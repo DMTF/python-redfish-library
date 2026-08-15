@@ -26,6 +26,14 @@ class RedfishAuthenticationError(RedfishError):
     """Raised when the Redfish service rejects authentication."""
 
 
+class RedfishPasswordChangeRequiredError(RedfishAuthenticationError):
+    """Raised when authentication requires a password change."""
+
+    def __init__(self, password_change_uri=None):
+        super().__init__("Redfish service requires a password change")
+        self.password_change_uri = password_change_uri
+
+
 class RedfishHTTPError(RedfishError):
     """Raised when a Redfish service returns an unsuccessful HTTP status."""
 

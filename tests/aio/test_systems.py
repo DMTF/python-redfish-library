@@ -121,8 +121,6 @@ class TestAsyncComputerSystemDiscovery(unittest.IsolatedAsyncioTestCase):
         self.session = aiohttp.ClientSession()
         self.client = AsyncRedfishClient(
             base_url=str(self.server.make_url("/")),
-            username="user",
-            password="password",
             session=self.session,
         )
 
@@ -244,8 +242,6 @@ class TestAsyncComputerSystemDiscovery(unittest.IsolatedAsyncioTestCase):
         self.delays["/redfish/v1/Systems/2/ResetActionInfo"] = 0.1
         client = AsyncRedfishClient(
             base_url=str(self.server.make_url("/")),
-            username="user",
-            password="password",
             session=self.session,
             discovery_timeout=0.01,
         )

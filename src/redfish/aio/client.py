@@ -18,6 +18,7 @@ from .exceptions import (
     RedfishConnectionError,
     RedfishHTTPError,
     RedfishInvalidTargetError,
+    RedfishPasswordChangeRequiredError,
     RedfishProtocolError,
     RedfishTimeoutError,
     RedfishUnsupportedResetError,
@@ -42,6 +43,8 @@ class AsyncRedfishClient:
         timeout=None,
         default_prefix="/redfish/v1/",
         discovery_timeout=60,
+        session_key=None,
+        session_location=None,
     ):
         if session is None:
             raise ValueError(
@@ -49,6 +52,8 @@ class AsyncRedfishClient:
             )
         if (username is None) != (password is None):
             raise ValueError("Username and password must be provided together")
+        if session_location is not None and session_key is None:
+            raise ValueError("Session location requires a session key")
 
         try:
             url = URL(base_url)
@@ -74,14 +79,129 @@ class AsyncRedfishClient:
         self._discovery_timeout = self._make_discovery_timeout(
             discovery_timeout
         )
+        self._auth_lock = asyncio.Lock()
+        self._username = username
+        self._password = password
+        if session_key is not None and (
+            not isinstance(session_key, str) or not session_key.strip()
+        ):
+            raise ValueError("Session key must be a non-empty string")
+        if session_key is not None and self._base_url.scheme != "https":
+            raise ValueError("Redfish authentication requires HTTPS")
+        if session_location is not None and (
+            not isinstance(session_location, str)
+            or not session_location.strip()
+        ):
+            raise ValueError("Session location must be a non-empty string")
+        if session_location is not None:
+            self._resolve_url(session_location)
+        self._session_key = session_key
+        self._session_location = session_location
         self._authorization = None
-        if username is not None:
-            if ":" in username:
-                raise ValueError("Username cannot contain ':'")
+
+    async def __aenter__(self):
+        await self.login()
+        return self
+
+    async def __aexit__(self, exc_type, exc_value, traceback):
+        await self.logout()
+
+    async def login(self, auth="session"):
+        """Authenticate with the Redfish service."""
+        if auth not in ("basic", "session"):
+            raise ValueError("Unsupported Redfish authentication method")
+        if self._username is None:
+            raise ValueError("Username and password are required")
+        if self._base_url.scheme != "https":
+            raise ValueError("Redfish authentication requires HTTPS")
+        if self._session_key is not None or self._authorization is not None:
+            await self.logout()
+        if auth == "basic":
+            if ":" in self._username:
+                raise ValueError(
+                    "Basic authentication username cannot contain ':'"
+                )
             encoded = base64.b64encode(
-                "{}:{}".format(username, password).encode("utf-8")
+                "{}:{}".format(
+                    self._username, self._password
+                ).encode("utf-8")
             ).decode("ascii")
+            self._session_key = None
+            self._session_location = None
             self._authorization = "Basic {}".format(encoded)
+            return
+
+        async with self._auth_lock:
+            await self._login_session()
+
+    async def _login_session(self):
+        root = await self._get_json(
+            self._default_prefix, authenticated=False
+        )
+        links = root.get("Links")
+        sessions = links.get("Sessions") if isinstance(links, dict) else None
+        target = (
+            sessions.get("@odata.id")
+            if isinstance(sessions, dict)
+            else None
+        )
+        if not isinstance(target, str) or not target.strip():
+            target = "/redfish/v1/SessionService/Sessions"
+        response = await self._request(
+            target,
+            method="POST",
+            body={"UserName": self._username, "Password": self._password},
+            authenticated=False,
+            sensitive_body=True,
+        )
+        self._ensure_success(response)
+        session_key = response.getheader("X-Auth-Token")
+        session_location = response.getheader("Location")
+        if (
+            not isinstance(session_location, str)
+            or not session_location.strip()
+        ):
+            response_body = response.dict
+            if isinstance(response_body, dict):
+                session_location = response_body.get("@odata.id")
+        if (
+            not isinstance(session_key, str)
+            or not session_key.strip()
+            or not isinstance(session_location, str)
+            or not session_location.strip()
+        ):
+            raise RedfishProtocolError(
+                "Redfish session response is missing authentication data"
+            )
+        self._resolve_url(session_location)
+        self._authorization = None
+        self._session_key = session_key
+        self._session_location = session_location
+
+    async def _refresh_session(self, expired_session_key):
+        async with self._auth_lock:
+            if self._session_key != expired_session_key:
+                return self._session_key is not None
+            self._session_key = None
+            self._session_location = None
+            await self._login_session()
+            return True
+
+    async def logout(self):
+        """Terminate Redfish login without closing the transport."""
+        response = None
+        try:
+            if (
+                self._session_key is not None
+                and self._session_location is not None
+            ):
+                response = await self.delete(self._session_location)
+        finally:
+            self._session_key = None
+            self._session_location = None
+            self._authorization = None
+        if response is not None and response.status not in (401, 404):
+            self._ensure_success(response)
 
     @staticmethod
     def _make_timeout(timeout):
@@ -124,13 +244,20 @@ class AsyncRedfishClient:
             raise RedfishInvalidTargetError("Invalid Redfish target") from exc
         return target_url
 
-    def _request_headers(self, headers):
+    def _request_headers(self, headers, authenticated=True):
         request_headers = CIMultiDict(
             {"Accept": "*/*", "OData-Version": "4.0"}
         )
         if headers is not None:
             request_headers.update(headers)
-        if self._authorization is not None:
+        if not authenticated:
+            request_headers.popall("Authorization", None)
+            request_headers.popall("X-Auth-Token", None)
+        elif self._session_key is not None:
+            request_headers.popall("Authorization", None)
+            request_headers["X-Auth-Token"] = self._session_key
+        elif self._authorization is not None:
+            request_headers.popall("X-Auth-Token", None)
             request_headers["Authorization"] = self._authorization
         return request_headers
 
@@ -142,14 +269,21 @@ class AsyncRedfishClient:
         body=None,
         headers=None,
         timeout=None,
+        authenticated=True,
+        allow_session_refresh=True,
+        sensitive_body=False,
     ):
-        request = AsyncRestRequest(path=path, method=method.upper(), body=body)
+        request = AsyncRestRequest(
+            path=path,
+            method=method.upper(),
+            body=None if sensitive_body else body,
+        )
         request_timeout = (
             self._timeout if timeout is None else self._make_timeout(timeout)
         )
         kwargs = {
             "allow_redirects": False,
-            "headers": self._request_headers(headers),
+            "headers": self._request_headers(headers, authenticated),
             "params": args,
         }
         if request_timeout is not None:
@@ -159,13 +293,14 @@ class AsyncRedfishClient:
         elif body is not None:
             kwargs["data"] = body
 
+        session_key = self._session_key
         try:
             async with self._session.request(
                 method.upper(), self._resolve_url(path), **kwargs
             ) as response:
                 content = await response.read()
                 encoding = response.get_encoding()
-                return AsyncRestResponse(
+                cached_response = AsyncRestResponse(
                     request=request,
                     status=response.status,
                     headers=response.headers,
@@ -176,6 +311,27 @@ class AsyncRedfishClient:
             raise RedfishTimeoutError("Redfish request timed out") from exc
         except aiohttp.ClientError as exc:
             raise RedfishConnectionError("Redfish request failed") from exc
+        if (
+            cached_response.status == 401
+            and method.upper() in ("GET", "HEAD")
+            and authenticated
+            and allow_session_refresh
+            and session_key is not None
+            and self._username is not None
+        ):
+            if await self._refresh_session(session_key):
+                return await self._request(
+                    path,
+                    method=method,
+                    args=args,
+                    body=body,
+                    headers=headers,
+                    timeout=timeout,
+                    authenticated=authenticated,
+                    allow_session_refresh=False,
+                    sensitive_body=sensitive_body,
+                )
+        return cached_response
 
     async def get(self, path, args=None, headers=None, timeout=None):
         """Perform a GET request."""
@@ -243,6 +399,11 @@ class AsyncRedfishClient:
 
     @staticmethod
     def _ensure_success(response):
+        password_change_uri = AsyncRedfishClient._get_password_change_uri(
+            response
+        )
+        if password_change_uri is not False:
+            raise RedfishPasswordChangeRequiredError(password_change_uri)
         if response.status in (401, 403):
             raise RedfishAuthenticationError(
                 "Redfish service rejected authentication"
@@ -250,8 +411,49 @@ class AsyncRedfishClient:
         if not 200 <= response.status < 300:
             raise RedfishHTTPError(response)
 
-    async def _get_json(self, path):
-        response = await self.get(path)
+    @staticmethod
+    def _get_password_change_uri(response):
+        try:
+            payload = response.dict
+        except RedfishProtocolError:
+            return False
+        if not isinstance(payload, dict):
+            return False
+        error = payload.get("error")
+        if not isinstance(error, dict):
+            return False
+        code = error.get("code")
+        if (
+            isinstance(code, str)
+            and code.startswith("Base.")
+            and code.endswith(".PasswordChangeRequired")
+        ):
+            return None
+        extended_info = error.get("@Message.ExtendedInfo")
+        if not isinstance(extended_info, list):
+            return False
+        for message in extended_info:
+            if (
+                not isinstance(message, dict)
+                or not isinstance(message_id := message.get("MessageId"), str)
+                or not message_id.startswith("Base.")
+                or not message_id.endswith(".PasswordChangeRequired")
+            ):
+                continue
+            message_args = message.get("MessageArgs")
+            if (
+                isinstance(message_args, list)
+                and message_args
+                and isinstance(message_args[0], str)
+            ):
+                return message_args[0]
+            return None
+        return False
+
+    async def _get_json(self, path, authenticated=True):
+        response = await self._request(
+            path, method="GET", authenticated=authenticated
+        )
         self._ensure_success(response)
         payload = response.dict
         if not isinstance(payload, dict):

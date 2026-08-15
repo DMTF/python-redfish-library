@@ -196,7 +196,9 @@ Asynchronous client
 
 The additive asynchronous API uses ``aiohttp`` and does not change the existing synchronous client.  The caller must provide an ``aiohttp.ClientSession`` and remains responsible for closing it.  This allows an application to control connection pooling, TLS trust, proxy behavior, and session lifetime in one place.
 
-The asynchronous client currently supports HTTP Basic authentication.  It does not create a Redfish session or require a separate login call.  Requests do not follow redirects, and advertised resource or action targets are accepted only when they resolve to the configured Redfish origin.  These rules prevent credentials from being sent to another origin.
+The asynchronous client supports Redfish session authentication and HTTP Basic authentication.  Authentication is explicit: call ``login`` after creating the client and ``logout`` when finished.  ``login`` uses Redfish session authentication by default, matching the synchronous client.  Redfish authentication requires HTTPS.
+
+The asynchronous context manager creates and terminates a Redfish session.  It does not close the caller's ``aiohttp.ClientSession``:
 
 .. code-block:: python
 
@@ -207,18 +209,23 @@ The asynchronous client currently supports HTTP Basic authentication.  It does n
 
     async def get_systems():
         async with aiohttp.ClientSession() as session:
-            client = AsyncRedfishClient(
+            async with AsyncRedfishClient(
                 base_url="https://bmc.example",
                 username="user",
                 password="password",
                 session=session,
                 timeout=10,
                 discovery_timeout=60,
-            )
+            ) as client:
+                service_root = await client.get_service_root()
+                systems = await client.get_systems()
+                return service_root, systems
 
-            service_root = await client.get_service_root()
-            systems = await client.get_systems()
-            return service_root, systems
+To use HTTP Basic authentication, call ``await client.login(auth="basic")`` and ensure ``await client.logout()`` is called when finished.  An existing Redfish session can be supplied with the ``session_key`` argument and, when available, its resource URI with ``session_location``.  Supplying the location allows ``logout`` to terminate that session.
+
+If an authenticated ``GET`` or ``HEAD`` receives HTTP 401, the client re-establishes an expired Redfish session once when credentials are available.  State-changing requests are never retried automatically.  Callers can therefore decide whether it is safe to repeat a failed ``POST``, ``PUT``, ``PATCH``, or ``DELETE``.
+
+Requests do not follow redirects, and advertised resource, action, and session targets are accepted only when they resolve to the configured Redfish origin.  Authentication headers provided by the caller cannot replace the client's configured Basic credentials or session token.  These rules prevent credentials from being sent to another origin.
 
 ``get``, ``head``, ``post``, ``put``, ``patch``, and ``delete`` are coroutines with the same ``path``, ``args``, ``body``, ``headers``, and ``timeout`` concepts as the synchronous methods.  The returned response is fully read and cached before the coroutine returns, so it can be inspected after the underlying aiohttp response closes.
 

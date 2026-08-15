@@ -16,22 +16,22 @@ from redfish.aio import AsyncRedfishClient
 async def main():
     """Discover and display Redfish ComputerSystem resources."""
     async with aiohttp.ClientSession() as session:
-        client = AsyncRedfishClient(
+        async with AsyncRedfishClient(
             base_url=os.environ["REDFISH_BASE_URL"],
             username=os.environ["REDFISH_USERNAME"],
             password=os.environ["REDFISH_PASSWORD"],
             session=session,
             timeout=10,
-        )
-        systems = await client.get_systems()
-        for system in systems.values():
-            print(
-                "{}: power={}, reset_types={}".format(
-                    system.name or system.system_id,
-                    system.power_state,
-                    sorted(system.reset_types),
+        ) as client:
+            systems = await client.get_systems()
+            for system in systems.values():
+                print(
+                    "{}: power={}, reset_types={}".format(
+                        system.name or system.system_id,
+                        system.power_state,
+                        sorted(system.reset_types),
+                    )
                 )
-            )
 
 
 if __name__ == "__main__":

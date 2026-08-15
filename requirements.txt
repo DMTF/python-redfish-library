@@ -1,4 +1,6 @@
 aiohttp>=3.9.0
+multidict>=4.5
+yarl>=1.0
 jsonpatch<=1.24 ; python_version == '3.4'
 jsonpatch ; python_version >= '3.5'
 jsonpath_ng

@@ -196,7 +196,7 @@ Asynchronous client
 
 The additive asynchronous API uses ``aiohttp`` and does not change the existing synchronous client.  The caller must provide an ``aiohttp.ClientSession`` and remains responsible for closing it.  This allows an application to control connection pooling, TLS trust, proxy behavior, and session lifetime in one place.
 
-The asynchronous client supports Redfish session authentication and HTTP Basic authentication.  Authentication is explicit: call ``login`` after creating the client and ``logout`` when finished.  ``login`` uses Redfish session authentication by default, matching the synchronous client.  Redfish authentication requires HTTPS.
+The asynchronous client supports Redfish session authentication and HTTP Basic authentication.  Authentication is explicit: call ``login`` after creating the client and ``logout`` when finished.  ``login`` uses Redfish session authentication by default, matching the synchronous client.  Redfish authentication requires HTTPS.  For compatibility with nonconforming services, session login uses the standard session collection URI and emits a warning if the service root incorrectly responds with HTTP 401.
 
 The asynchronous context manager creates and terminates a Redfish session.  It does not close the caller's ``aiohttp.ClientSession``:
 
@@ -221,7 +221,9 @@ The asynchronous context manager creates and terminates a Redfish session.  It d
                 systems = await client.get_systems()
                 return service_root, systems
 
-To use HTTP Basic authentication, call ``await client.login(auth="basic")`` and ensure ``await client.logout()`` is called when finished.  An existing Redfish session can be supplied with the ``session_key`` argument and, when available, its resource URI with ``session_location``.  Supplying the location allows ``logout`` to terminate that session.
+To use HTTP Basic authentication, call ``await client.login(auth="basic")`` and ensure ``await client.logout()`` is called when finished.  Basic ``login`` configures the authentication header; the service validates the credentials when the client performs its next request.  An existing Redfish session can be supplied with the ``session_key`` argument and, when available, its resource URI with ``session_location``.  Supplying the location allows ``logout`` to terminate that session.
+
+If session login reports that the account password must change, ``login`` raises ``RedfishPasswordChangeRequiredError`` with the account URI in ``password_change_uri`` while retaining the restricted session.  The caller can use that client to change the password and then call ``logout``.  The asynchronous context manager instead cleans up a restricted session before propagating this exception because a failed ``__aenter__`` call cannot return the client to the context body.
 
 If an authenticated ``GET`` or ``HEAD`` receives HTTP 401, the client re-establishes an expired Redfish session once when credentials are available.  State-changing requests are never retried automatically.  Callers can therefore decide whether it is safe to repeat a failed ``POST``, ``PUT``, ``PATCH``, or ``DELETE``.
 
@@ -229,7 +231,7 @@ Requests do not follow redirects, and advertised resource, action, and session t
 
 ``get``, ``head``, ``post``, ``put``, ``patch``, and ``delete`` are coroutines with the same ``path``, ``args``, ``body``, ``headers``, and ``timeout`` concepts as the synchronous methods.  The returned response is fully read and cached before the coroutine returns, so it can be inspected after the underlying aiohttp response closes.
 
-``get_systems`` follows the standard ServiceRoot ``Systems`` link, collection pagination, ComputerSystem member links, and reset ActionInfo resources.  It returns ``ComputerSystem`` objects containing standard identity, metadata, power state, reset target, and advertised standard reset types.  ``reset_system`` sends an advertised reset type to that system's advertised reset target:
+``get_systems`` follows the standard ServiceRoot ``Systems`` link, collection pagination, ComputerSystem member links, and reset ActionInfo resources.  It returns ``ComputerSystem`` objects containing standard identity, metadata, power state, reset target, and every usable string-valued reset type advertised by the service.  Preserving unknown values allows callers to handle newer Redfish reset types without waiting for a library update.  ``reset_system`` sends an advertised reset type to that system's advertised reset target:
 
 .. code-block:: python
 

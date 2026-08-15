@@ -7,7 +7,6 @@
 
 import asyncio
 import base64
-from dataclasses import replace
 import warnings
 
 import aiohttp
@@ -22,12 +21,6 @@ from .exceptions import (
     RedfishPasswordChangeRequiredError,
     RedfishProtocolError,
     RedfishTimeoutError,
-    RedfishUnsupportedResetError,
-)
-from .models import (
-    get_reset_action_info_target,
-    parse_computer_system,
-    parse_reset_action_info,
 )
 from .response import AsyncRestRequest, AsyncRestResponse
 
@@ -46,7 +39,6 @@ class AsyncRedfishClient:
         session=None,
         timeout=None,
         default_prefix="/redfish/v1/",
-        discovery_timeout=60,
         session_key=None,
         session_location=None,
     ):
@@ -80,9 +72,6 @@ class AsyncRedfishClient:
         self._session = session
         self._timeout = self._make_timeout(timeout)
         self._default_prefix = default_prefix
-        self._discovery_timeout = self._make_discovery_timeout(
-            discovery_timeout
-        )
         self._auth_lock = asyncio.Lock()
         self._username = username
         self._password = password
@@ -245,16 +234,6 @@ class AsyncRedfishClient:
         if not isinstance(timeout, (int, float)) or timeout < 0:
             raise ValueError("Timeout must be a non-negative number")
         return aiohttp.ClientTimeout(total=timeout)
-
-    @staticmethod
-    def _make_discovery_timeout(timeout):
-        if timeout is not None and (
-            not isinstance(timeout, (int, float)) or timeout < 0
-        ):
-            raise ValueError(
-                "Discovery timeout must be a non-negative number"
-            )
-        return timeout
 
     def _resolve_url(self, target):
         try:
@@ -504,86 +483,3 @@ class AsyncRedfishClient:
     async def get_service_root(self):
         """Return the standard Redfish service root."""
         return await self._get_json(self._default_prefix)
-
-    async def _get_collection_members(self, link):
-        if (
-            not isinstance(link, dict)
-            or not isinstance(path := link.get("@odata.id"), str)
-            or not path.strip()
-        ):
-            return []
-
-        payloads = []
-        seen_paths = set()
-        while True:
-            if path in seen_paths:
-                raise RedfishProtocolError(
-                    "Redfish collection pagination contains a cycle"
-                )
-            seen_paths.add(path)
-            collection = await self._get_json(path)
-            members = collection.get("Members")
-            if not isinstance(members, list):
-                return []
-            for member in members:
-                if (
-                    isinstance(member, dict)
-                    and isinstance(member_path := member.get("@odata.id"), str)
-                    and member_path.strip()
-                ):
-                    payloads.append(await self._get_json(member_path))
-            next_path = collection.get("Members@odata.nextLink")
-            if not isinstance(next_path, str) or not next_path.strip():
-                return payloads
-            path = next_path
-
-    async def _discover_systems(self):
-        root = await self.get_service_root()
-        systems = {}
-        for payload in await self._get_collection_members(root.get("Systems")):
-            system = parse_computer_system(payload)
-            if system is None:
-                continue
-            action_info_target = get_reset_action_info_target(payload)
-            if (
-                system.reset_target is not None
-                and action_info_target is not None
-            ):
-                action_info = await self._get_json(action_info_target)
-                system = replace(
-                    system,
-                    reset_types=system.reset_types
-                    | parse_reset_action_info(action_info),
-                )
-            systems[system.system_id] = system
-        return systems
-
-    async def get_systems(self):
-        """Discover ComputerSystem resources from the Redfish service root."""
-        try:
-            return await asyncio.wait_for(
-                self._discover_systems(), timeout=self._discovery_timeout
-            )
-        except asyncio.TimeoutError as exc:
-            raise RedfishTimeoutError(
-                "Redfish system discovery timed out"
-            ) from exc
-
-    async def reset_system(self, system, reset_type, timeout=None):
-        """Perform a reset type advertised by a ComputerSystem."""
-        if (
-            system.reset_target is None
-            or reset_type not in system.reset_types
-        ):
-            raise RedfishUnsupportedResetError(
-                "ComputerSystem does not advertise ResetType {}".format(
-                    reset_type
-                )
-            )
-        response = await self.post(
-            system.reset_target,
-            body={"ResetType": reset_type},
-            timeout=timeout,
-        )
-        self._ensure_success(response)
-        return response

@@ -3,7 +3,7 @@
 # License: BSD 3-Clause License. For full text see link:
 # https://github.com/DMTF/python-redfish-library/blob/main/LICENSE.md
 
-"""Discover ComputerSystem resources with the asynchronous Redfish client."""
+"""Retrieve the service root with the asynchronous Redfish client."""
 
 import asyncio
 import os
@@ -14,7 +14,7 @@ from redfish.aio import AsyncRedfishClient
 
 
 async def main():
-    """Discover and display Redfish ComputerSystem resources."""
+    """Retrieve and display the Redfish service root."""
     async with aiohttp.ClientSession() as session:
         async with AsyncRedfishClient(
             base_url=os.environ["REDFISH_BASE_URL"],
@@ -23,15 +23,8 @@ async def main():
             session=session,
             timeout=10,
         ) as client:
-            systems = await client.get_systems()
-            for system in systems.values():
-                print(
-                    "{}: power={}, reset_types={}".format(
-                        system.name or system.system_id,
-                        system.power_state,
-                        sorted(system.reset_types),
-                    )
-                )
+            service_root = await client.get_service_root()
+            print(service_root)
 
 
 if __name__ == "__main__":

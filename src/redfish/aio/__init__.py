@@ -15,13 +15,6 @@ from .exceptions import (
     RedfishPasswordChangeRequiredError,
     RedfishProtocolError,
     RedfishTimeoutError,
-    RedfishUnsupportedResetError,
-)
-from .models import (
-    ComputerSystem,
-    get_reset_action_info_target,
-    parse_computer_system,
-    parse_reset_action_info,
 )
 from .response import AsyncRestRequest, AsyncRestResponse
 
@@ -29,7 +22,6 @@ __all__ = [
     "AsyncRedfishClient",
     "AsyncRestRequest",
     "AsyncRestResponse",
-    "ComputerSystem",
     "RedfishAuthenticationError",
     "RedfishConnectionError",
     "RedfishError",
@@ -38,8 +30,4 @@ __all__ = [
     "RedfishPasswordChangeRequiredError",
     "RedfishProtocolError",
     "RedfishTimeoutError",
-    "RedfishUnsupportedResetError",
-    "get_reset_action_info_target",
-    "parse_computer_system",
-    "parse_reset_action_info",
 ]

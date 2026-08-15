@@ -851,7 +851,7 @@ class TestAsyncRedfishAuthentication(unittest.IsolatedAsyncioTestCase):
         await client.login(auth="basic")
 
         with self.assertRaises(RedfishPasswordChangeRequiredError):
-            await client.get_systems()
+            await client.get_service_root()
 
     async def test_login_error_does_not_retain_credentials(self):
         """Test a session-creation error cannot expose its credential body."""
@@ -1150,8 +1150,8 @@ class TestAsyncRedfishAuthentication(unittest.IsolatedAsyncioTestCase):
         await client.login()
 
         response = await client.post(
-            "/redfish/v1/Systems/1/Actions/ComputerSystem.Reset",
-            body={"ResetType": "On"},
+            "/redfish/v1/Actions/Example",
+            body={"Value": "example"},
         )
 
         self.assertEqual(response.status, 401)

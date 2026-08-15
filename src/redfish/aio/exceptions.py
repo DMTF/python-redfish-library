@@ -46,7 +46,3 @@ class RedfishHTTPError(RedfishError):
 
 class RedfishProtocolError(RedfishError):
     """Raised when a Redfish resource is malformed."""
-
-
-class RedfishUnsupportedResetError(RedfishError):
-    """Raised when a reset type is not advertised by a ComputerSystem."""

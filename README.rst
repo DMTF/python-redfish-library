@@ -207,7 +207,7 @@ The asynchronous context manager creates and terminates a Redfish session.  It d
     from redfish.aio import AsyncRedfishClient
 
 
-    async def get_systems():
+    async def get_service_root():
         async with aiohttp.ClientSession() as session:
             async with AsyncRedfishClient(
                 base_url="https://bmc.example",
@@ -215,11 +215,8 @@ The asynchronous context manager creates and terminates a Redfish session.  It d
                 password="password",
                 session=session,
                 timeout=10,
-                discovery_timeout=60,
             ) as client:
-                service_root = await client.get_service_root()
-                systems = await client.get_systems()
-                return service_root, systems
+                return await client.get_service_root()
 
 To use HTTP Basic authentication, call ``await client.login(auth="basic")`` and ensure ``await client.logout()`` is called when finished.  Basic ``login`` configures the authentication header; the service validates the credentials when the client performs its next request.  An existing Redfish session can be supplied with the ``session_key`` argument and, when available, its resource URI with ``session_location``.  Supplying the location allows ``logout`` to terminate that session.
 
@@ -231,16 +228,7 @@ Requests do not follow redirects, and advertised resource, action, and session t
 
 ``get``, ``head``, ``post``, ``put``, ``patch``, and ``delete`` are coroutines with the same ``path``, ``args``, ``body``, ``headers``, and ``timeout`` concepts as the synchronous methods.  The returned response is fully read and cached before the coroutine returns, so it can be inspected after the underlying aiohttp response closes.
 
-``get_systems`` follows the standard ServiceRoot ``Systems`` link, collection pagination, ComputerSystem member links, and reset ActionInfo resources.  It returns ``ComputerSystem`` objects containing standard identity, metadata, power state, reset target, and every usable string-valued reset type advertised by the service.  Preserving unknown values allows callers to handle newer Redfish reset types without waiting for a library update.  ``reset_system`` sends an advertised reset type to that system's advertised reset target:
-
-.. code-block:: python
-
-    systems = await client.get_systems()
-    system = systems["1"]
-    if "On" in system.reset_types:
-        await client.reset_system(system, "On")
-
-The optional request ``timeout`` bounds each HTTP request.  ``discovery_timeout`` defaults to 60 seconds and bounds the complete ServiceRoot, collection, member, and ActionInfo discovery operation.  TLS verification is controlled entirely by the injected ``ClientSession``.  Configure that session with an appropriate CA certificate or SSL context for a Redfish service using a private or self-signed certificate.
+The optional request ``timeout`` bounds each HTTP request.  TLS verification is controlled entirely by the injected ``ClientSession``.  Configure that session with an appropriate CA certificate or SSL context for a Redfish service using a private or self-signed certificate.
 
 Working with tasks
 ~~~~~~~~~~~~~~~~~~

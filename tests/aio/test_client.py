@@ -180,10 +180,8 @@ class TestAsyncRedfishClient(unittest.IsolatedAsyncioTestCase):
             self.server.make_url("/scheme-relative").with_scheme("")
         )
 
-        await self.client.post(absolute_target, body={"ResetType": "On"})
-        await self.client.post(
-            scheme_relative_target, body={"ResetType": "GracefulShutdown"}
-        )
+        await self.client.post(absolute_target)
+        await self.client.post(scheme_relative_target)
 
         self.assertEqual(
             [request["path_qs"] for request in self.requests],
@@ -223,7 +221,7 @@ class TestAsyncRedfishClient(unittest.IsolatedAsyncioTestCase):
             with self.subTest(target=target), self.assertRaises(
                 RedfishInvalidTargetError
             ):
-                await self.client.post(target, body={"ResetType": "On"})
+                await self.client.post(target)
 
         self.assertEqual(malicious_requests, [])
 
@@ -297,8 +295,6 @@ class TestAsyncRedfishClient(unittest.IsolatedAsyncioTestCase):
             {**valid, "password": "password"},
             {**valid, "timeout": -1},
             {**valid, "timeout": "invalid"},
-            {**valid, "discovery_timeout": -1},
-            {**valid, "discovery_timeout": "invalid"},
             {**valid, "base_url": "https://["},
             {**valid, "base_url": "bmc.example"},
             {**valid, "base_url": "https://user@bmc.example"},

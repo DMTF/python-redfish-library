@@ -14,6 +14,7 @@ from redfish.aio import (
     AsyncRedfishClient,
     RedfishConnectionError,
     RedfishInvalidTargetError,
+    RedfishProtocolError,
     RedfishTimeoutError,
 )
 
@@ -50,6 +51,12 @@ class TestAsyncRedfishClient(unittest.IsolatedAsyncioTestCase):
             )
             if request.path == "/empty":
                 return web.Response(status=204)
+            if request.path == "/invalid-json":
+                return web.Response(
+                    text="not JSON", content_type="application/json"
+                )
+            if request.path == "/list":
+                return web.json_response([])
             status = 401 if request.path == "/unauthorized" else 200
             return web.json_response(
                 {"method": request.method, "path": request.path},
@@ -172,6 +179,42 @@ class TestAsyncRedfishClient(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(response.status, 204)
         self.assertEqual(response.dict, {})
+
+    async def test_get_service_root_returns_json_object(self):
+        """Test service-root retrieval returns its JSON object."""
+        service_root = await self.client.get_service_root()
+
+        self.assertEqual(
+            service_root, {"method": "GET", "path": "/redfish/v1/"}
+        )
+
+    async def test_get_service_root_rejects_non_object_json(self):
+        """Test service-root retrieval rejects non-object JSON."""
+        client = AsyncRedfishClient(
+            base_url=str(self.server.make_url("/")),
+            default_prefix="/list",
+            session=self.session,
+        )
+
+        with self.assertRaisesRegex(
+            RedfishProtocolError,
+            "Redfish resource at /list is not a JSON object",
+        ):
+            await client.get_service_root()
+
+    async def test_get_service_root_rejects_invalid_json(self):
+        """Test service-root retrieval rejects malformed JSON."""
+        client = AsyncRedfishClient(
+            base_url=str(self.server.make_url("/")),
+            default_prefix="/invalid-json",
+            session=self.session,
+        )
+
+        with self.assertRaisesRegex(
+            RedfishProtocolError,
+            "Service responded with invalid JSON at URI /invalid-json",
+        ):
+            await client.get_service_root()
 
     async def test_same_origin_absolute_and_scheme_relative_targets(self):
         """Test advertised same-origin target forms are accepted."""

@@ -8,6 +8,7 @@
 import asyncio
 import base64
 from dataclasses import replace
+import warnings
 
 import aiohttp
 from multidict import CIMultiDict
@@ -29,6 +30,9 @@ from .models import (
     parse_reset_action_info,
 )
 from .response import AsyncRestRequest, AsyncRestResponse
+
+
+SESSION_COLLECTION_PATH = "/redfish/v1/SessionService/Sessions"
 
 
 class AsyncRedfishClient:
@@ -100,7 +104,11 @@ class AsyncRedfishClient:
         self._authorization = None
 
     async def __aenter__(self):
-        await self.login()
+        try:
+            await self.login()
+        except RedfishPasswordChangeRequiredError:
+            await self.logout()
+            raise
         return self
 
     async def __aexit__(self, exc_type, exc_value, traceback):
@@ -114,39 +122,58 @@ class AsyncRedfishClient:
             raise ValueError("Username and password are required")
         if self._base_url.scheme != "https":
             raise ValueError("Redfish authentication requires HTTPS")
-        if self._session_key is not None or self._authorization is not None:
-            await self.logout()
-        if auth == "basic":
-            if ":" in self._username:
-                raise ValueError(
-                    "Basic authentication username cannot contain ':'"
-                )
-            encoded = base64.b64encode(
-                "{}:{}".format(
-                    self._username, self._password
-                ).encode("utf-8")
-            ).decode("ascii")
-            self._session_key = None
-            self._session_location = None
-            self._authorization = "Basic {}".format(encoded)
-            return
+        if auth == "basic" and ":" in self._username:
+            raise ValueError(
+                "Basic authentication username cannot contain ':'"
+            )
 
         async with self._auth_lock:
+            if (
+                self._session_key is not None
+                or self._authorization is not None
+            ):
+                await self._logout_locked()
+            if auth == "basic":
+                encoded = base64.b64encode(
+                    "{}:{}".format(
+                        self._username, self._password
+                    ).encode("utf-8")
+                ).decode("ascii")
+                self._authorization = "Basic {}".format(encoded)
+                return
             await self._login_session()
 
     async def _login_session(self):
-        root = await self._get_json(
+        root_response = await self._request(
             self._default_prefix, authenticated=False
         )
-        links = root.get("Links")
-        sessions = links.get("Sessions") if isinstance(links, dict) else None
-        target = (
-            sessions.get("@odata.id")
-            if isinstance(sessions, dict)
-            else None
-        )
-        if not isinstance(target, str) or not target.strip():
-            target = "/redfish/v1/SessionService/Sessions"
+        if root_response.status == 401:
+            warnings.warn(
+                "Service incorrectly responded with HTTP 401 Unauthorized "
+                "for the service root; contact the vendor",
+                stacklevel=2,
+            )
+            target = SESSION_COLLECTION_PATH
+        else:
+            self._ensure_success(root_response)
+            root = root_response.dict
+            if not isinstance(root, dict):
+                raise RedfishProtocolError(
+                    "Redfish resource at {} is not a JSON object".format(
+                        self._default_prefix
+                    )
+                )
+            links = root.get("Links")
+            sessions = (
+                links.get("Sessions") if isinstance(links, dict) else None
+            )
+            target = (
+                sessions.get("@odata.id")
+                if isinstance(sessions, dict)
+                else None
+            )
+            if not isinstance(target, str) or not target.strip():
+                target = SESSION_COLLECTION_PATH
         response = await self._request(
             target,
             method="POST",
@@ -154,7 +181,9 @@ class AsyncRedfishClient:
             authenticated=False,
             sensitive_body=True,
         )
-        self._ensure_success(response)
+        password_change_uri = self._get_password_change_uri(response)
+        if not 200 <= response.status < 300:
+            self._ensure_success(response)
         session_key = response.getheader("X-Auth-Token")
         session_location = response.getheader("Location")
         if (
@@ -177,6 +206,8 @@ class AsyncRedfishClient:
         self._authorization = None
         self._session_key = session_key
         self._session_location = session_location
+        if password_change_uri is not False:
+            raise RedfishPasswordChangeRequiredError(password_change_uri)
 
     async def _refresh_session(self, expired_session_key):
         async with self._auth_lock:
@@ -187,8 +218,7 @@ class AsyncRedfishClient:
             await self._login_session()
             return True
 
-    async def logout(self):
-        """Terminate Redfish login without closing the transport."""
+    async def _logout_locked(self):
         response = None
         try:
             if (
@@ -202,6 +232,11 @@ class AsyncRedfishClient:
             self._authorization = None
         if response is not None and response.status not in (401, 404):
             self._ensure_success(response)
+
+    async def logout(self):
+        """Terminate Redfish login without closing the transport."""
+        async with self._auth_lock:
+            await self._logout_locked()
 
     @staticmethod
     def _make_timeout(timeout):
@@ -419,35 +454,39 @@ class AsyncRedfishClient:
             return False
         if not isinstance(payload, dict):
             return False
-        error = payload.get("error")
-        if not isinstance(error, dict):
-            return False
-        code = error.get("code")
-        if (
-            isinstance(code, str)
-            and code.startswith("Base.")
-            and code.endswith(".PasswordChangeRequired")
-        ):
-            return None
-        extended_info = error.get("@Message.ExtendedInfo")
-        if not isinstance(extended_info, list):
-            return False
-        for message in extended_info:
-            if (
-                not isinstance(message, dict)
-                or not isinstance(message_id := message.get("MessageId"), str)
-                or not message_id.startswith("Base.")
-                or not message_id.endswith(".PasswordChangeRequired")
-            ):
+        containers = [payload]
+        if isinstance(error := payload.get("error"), dict):
+            containers.append(error)
+        for container in containers:
+            extended_info = container.get("@Message.ExtendedInfo")
+            if not isinstance(extended_info, list):
                 continue
-            message_args = message.get("MessageArgs")
+            for message in extended_info:
+                if (
+                    not isinstance(message, dict)
+                    or not isinstance(
+                        message_id := message.get("MessageId"), str
+                    )
+                    or not message_id.startswith("Base.")
+                    or not message_id.endswith(".PasswordChangeRequired")
+                ):
+                    continue
+                message_args = message.get("MessageArgs")
+                if (
+                    isinstance(message_args, list)
+                    and message_args
+                    and isinstance(message_args[0], str)
+                ):
+                    return message_args[0]
+                return None
+        for container in containers:
+            code = container.get("code")
             if (
-                isinstance(message_args, list)
-                and message_args
-                and isinstance(message_args[0], str)
+                isinstance(code, str)
+                and code.startswith("Base.")
+                and code.endswith(".PasswordChangeRequired")
             ):
-                return message_args[0]
-            return None
+                return None
         return False
 
     async def _get_json(self, path, authenticated=True):

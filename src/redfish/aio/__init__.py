@@ -18,7 +18,6 @@ from .exceptions import (
     RedfishUnsupportedResetError,
 )
 from .models import (
-    STANDARD_RESET_TYPES,
     ComputerSystem,
     get_reset_action_info_target,
     parse_computer_system,
@@ -40,7 +39,6 @@ __all__ = [
     "RedfishProtocolError",
     "RedfishTimeoutError",
     "RedfishUnsupportedResetError",
-    "STANDARD_RESET_TYPES",
     "get_reset_action_info_target",
     "parse_computer_system",
     "parse_reset_action_info",

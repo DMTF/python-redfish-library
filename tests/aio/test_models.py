@@ -29,6 +29,49 @@ class TestAsyncResourceModels(unittest.TestCase):
             with self.subTest(payload=payload):
                 self.assertEqual(parse_reset_action_info(payload), frozenset())
 
+    def test_advertised_reset_types_are_forward_compatible(self):
+        """Test unknown string values remain available to callers."""
+        self.assertEqual(
+            parse_reset_action_info(
+                {
+                    "Parameters": [
+                        {
+                            "Name": "ResetType",
+                            "AllowableValues": [
+                                "On",
+                                "FutureStandardReset",
+                                " ",
+                                1,
+                            ],
+                        }
+                    ]
+                }
+            ),
+            frozenset({"On", "FutureStandardReset"}),
+        )
+        system = parse_computer_system(
+            {
+                "@odata.id": "/redfish/v1/Systems/1",
+                "Id": "1",
+                "Actions": {
+                    "#ComputerSystem.Reset": {
+                        "target": "/redfish/v1/Systems/1/Actions/Reset",
+                        "ResetType@Redfish.AllowableValues": [
+                            "On",
+                            "FutureStandardReset",
+                            " ",
+                            1,
+                        ],
+                    }
+                },
+            }
+        )
+        self.assertIsNotNone(system)
+        self.assertEqual(
+            system.reset_types,
+            frozenset({"On", "FutureStandardReset"}),
+        )
+
     def test_computer_system_requires_standard_identifiers(self):
         """Test systems without usable identifiers are rejected."""
         for payload in (

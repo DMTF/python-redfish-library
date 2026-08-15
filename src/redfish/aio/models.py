@@ -9,25 +9,6 @@ from dataclasses import dataclass
 from typing import FrozenSet, Optional
 
 
-STANDARD_RESET_TYPES = frozenset(
-    {
-        "ForceOff",
-        "ForceOn",
-        "ForceRestart",
-        "FullPowerCycle",
-        "GracefulRestart",
-        "GracefulShutdown",
-        "Nmi",
-        "On",
-        "Pause",
-        "PowerCycle",
-        "PushPowerButton",
-        "Resume",
-        "Suspend",
-    }
-)
-
-
 @dataclass(frozen=True)
 class ComputerSystem:
     """Standard properties and reset capabilities of a ComputerSystem."""
@@ -81,7 +62,7 @@ def parse_reset_action_info(payload):
         return frozenset(
             value
             for value in allowable_values
-            if isinstance(value, str) and value in STANDARD_RESET_TYPES
+            if isinstance(value, str) and value.strip()
         )
     return frozenset()
 
@@ -103,7 +84,7 @@ def parse_computer_system(payload):
             reset_types = frozenset(
                 value
                 for value in allowable_values
-                if isinstance(value, str) and value in STANDARD_RESET_TYPES
+                if isinstance(value, str) and value.strip()
             )
 
     return ComputerSystem(

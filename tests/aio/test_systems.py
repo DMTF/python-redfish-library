@@ -59,6 +59,7 @@ class TestAsyncComputerSystemDiscovery(unittest.IsolatedAsyncioTestCase):
                             "On",
                             "GracefulShutdown",
                             "VendorReset",
+                            " ",
                             1,
                         ],
                     }
@@ -89,6 +90,7 @@ class TestAsyncComputerSystemDiscovery(unittest.IsolatedAsyncioTestCase):
                             "ForceOff",
                             "GracefulRestart",
                             "VendorReset",
+                            " ",
                         ],
                     }
                 ]
@@ -148,7 +150,9 @@ class TestAsyncComputerSystemDiscovery(unittest.IsolatedAsyncioTestCase):
                         "/redfish/v1/Systems/1/Actions/"
                         "ComputerSystem.Reset"
                     ),
-                    reset_types=frozenset({"On", "GracefulShutdown"}),
+                    reset_types=frozenset(
+                        {"On", "GracefulShutdown", "VendorReset"}
+                    ),
                 ),
                 "2": ComputerSystem(
                     odata_id="/redfish/v1/Systems/2",
@@ -163,7 +167,9 @@ class TestAsyncComputerSystemDiscovery(unittest.IsolatedAsyncioTestCase):
                         "/redfish/v1/Systems/2/Actions/"
                         "ComputerSystem.Reset"
                     ),
-                    reset_types=frozenset({"ForceOff", "GracefulRestart"}),
+                    reset_types=frozenset(
+                        {"ForceOff", "GracefulRestart", "VendorReset"}
+                    ),
                 ),
             },
         )

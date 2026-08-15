@@ -58,8 +58,10 @@ class BarrierResponse(FakeResponse):
 class ControlledResponse(FakeResponse):
     """Response controlled by test events."""
 
-    def __init__(self, started, release):
-        super().__init__(status=401)
+    def __init__(
+        self, started, release, status=401, headers=None, body=b"{}"
+    ):
+        super().__init__(status=status, headers=headers, body=body)
         self._started = started
         self._release = release
 
@@ -74,9 +76,10 @@ class FakeSession:
 
     closed = False
 
-    def __init__(self, responses=None):
+    def __init__(self, responses=None, response_factory=None):
         self.requests = []
         self.responses = list(responses or [])
+        self.response_factory = response_factory
 
     def request(self, method, url, **kwargs):
         self.requests.append(
@@ -87,6 +90,8 @@ class FakeSession:
                 "body": kwargs.get("json", kwargs.get("data")),
             }
         )
+        if self.response_factory is not None:
+            return self.response_factory(method, url, kwargs)
         return self.responses.pop(0)
 
 
@@ -143,6 +148,30 @@ class TestAsyncRedfishAuthentication(unittest.IsolatedAsyncioTestCase):
         )
         with self.assertRaises(ValueError):
             await basic_client.login(auth="basic")
+
+    async def test_invalid_basic_login_preserves_existing_session(self):
+        """Test Basic argument validation does not terminate a session."""
+        session = FakeSession([FakeResponse()])
+        client = AsyncRedfishClient(
+            base_url="https://bmc.example",
+            username="domain:user",
+            password="password",
+            session=session,
+            session_key="session-token",
+            session_location="/redfish/v1/SessionService/Sessions/1",
+        )
+
+        with self.assertRaises(ValueError):
+            await client.login(auth="basic")
+        await client.get("/redfish/v1/Systems/1")
+
+        self.assertEqual(
+            [request["method"] for request in session.requests], ["GET"]
+        )
+        self.assertEqual(
+            session.requests[0]["headers"].get("X-Auth-Token"),
+            "session-token",
+        )
 
     async def test_credentials_are_inactive_until_login(self):
         """Test constructing a client does not begin authentication."""
@@ -293,6 +322,59 @@ class TestAsyncRedfishAuthentication(unittest.IsolatedAsyncioTestCase):
             session.requests[2]["headers"].get("Authorization")
         )
 
+    async def test_session_login_falls_back_after_root_unauthorized(self):
+        """Test login tolerates a service root that incorrectly needs auth."""
+        session = FakeSession(
+            [
+                FakeResponse(status=401),
+                FakeResponse(
+                    status=201,
+                    headers={
+                        "X-Auth-Token": "session-token",
+                        "Location": (
+                            "/redfish/v1/SessionService/Sessions/1"
+                        ),
+                    },
+                ),
+            ]
+        )
+        client = AsyncRedfishClient(
+            base_url="https://bmc.example",
+            username="user",
+            password="password",
+            session=session,
+        )
+
+        with self.assertWarnsRegex(
+            UserWarning, "incorrectly responded with HTTP 401"
+        ):
+            await client.login()
+
+        self.assertEqual(
+            [request["method"] for request in session.requests],
+            ["GET", "POST"],
+        )
+        self.assertTrue(
+            session.requests[1]["url"].endswith(
+                "/redfish/v1/SessionService/Sessions"
+            )
+        )
+
+    async def test_session_login_rejects_non_object_service_root(self):
+        """Test session discovery requires a service-root object."""
+        session = FakeSession([FakeResponse(body=b"[]")])
+        client = AsyncRedfishClient(
+            base_url="https://bmc.example",
+            username="user",
+            password="password",
+            session=session,
+        )
+
+        with self.assertRaises(RedfishProtocolError):
+            await client.login()
+
+        self.assertEqual(len(session.requests), 1)
+
     async def test_logout_deletes_session_without_closing_transport(self):
         """Test logout deletes only the Redfish login session."""
         session = FakeSession(
@@ -430,6 +512,109 @@ class TestAsyncRedfishAuthentication(unittest.IsolatedAsyncioTestCase):
             "old-token",
         )
 
+    async def test_concurrent_logins_do_not_leak_a_session(self):
+        """Test concurrent explicit logins serialize session replacement."""
+        started = asyncio.Event()
+        release = asyncio.Event()
+        login_count = 0
+
+        def response_factory(method, url, kwargs):
+            nonlocal login_count
+            if method == "DELETE":
+                return FakeResponse(status=204, body=b"")
+            if method != "POST":
+                return FakeResponse()
+            login_count += 1
+            headers = {
+                "X-Auth-Token": (
+                    "first-token" if login_count == 1 else "second-token"
+                ),
+                "Location": (
+                    "/redfish/v1/SessionService/Sessions/{}".format(
+                        login_count
+                    )
+                ),
+            }
+            if login_count == 1:
+                return ControlledResponse(
+                    started, release, status=201, headers=headers
+                )
+            return FakeResponse(status=201, headers=headers)
+
+        session = FakeSession(response_factory=response_factory)
+        client = AsyncRedfishClient(
+            base_url="https://bmc.example",
+            username="user",
+            password="password",
+            session=session,
+        )
+
+        first_login = asyncio.create_task(client.login())
+        await started.wait()
+        second_login = asyncio.create_task(client.login())
+        await asyncio.sleep(0)
+        release.set()
+        await asyncio.gather(first_login, second_login)
+        await client.get("/redfish/v1/Systems/1")
+
+        self.assertEqual(
+            [request["method"] for request in session.requests],
+            ["GET", "POST", "DELETE", "GET", "POST", "GET"],
+        )
+        self.assertEqual(
+            session.requests[-1]["headers"].get("X-Auth-Token"),
+            "second-token",
+        )
+
+    async def test_logout_waits_for_login_in_progress(self):
+        """Test logout cannot be undone by an in-progress login."""
+        started = asyncio.Event()
+        release = asyncio.Event()
+        session = FakeSession(
+            [
+                FakeResponse(status=204, body=b""),
+                FakeResponse(body=b"{}"),
+                ControlledResponse(
+                    started,
+                    release,
+                    status=201,
+                    headers={
+                        "X-Auth-Token": "new-token",
+                        "Location": (
+                            "/redfish/v1/SessionService/Sessions/2"
+                        ),
+                    },
+                ),
+                FakeResponse(status=204, body=b""),
+                FakeResponse(),
+            ]
+        )
+        client = AsyncRedfishClient(
+            base_url="https://bmc.example",
+            username="user",
+            password="password",
+            session=session,
+            session_key="old-token",
+            session_location="/redfish/v1/SessionService/Sessions/1",
+        )
+
+        login = asyncio.create_task(client.login())
+        await started.wait()
+        logout = asyncio.create_task(client.logout())
+        await asyncio.sleep(0)
+        self.assertFalse(logout.done())
+        release.set()
+        await asyncio.gather(login, logout)
+        await client.get("/redfish/v1/Systems/1")
+
+        self.assertEqual(
+            [request["method"] for request in session.requests],
+            ["DELETE", "GET", "POST", "DELETE", "GET"],
+        )
+        self.assertIsNone(
+            session.requests[-1]["headers"].get("X-Auth-Token")
+        )
+
     async def test_password_change_required_is_classified(self):
         """Test session login reports a required password change."""
         session = FakeSession(
@@ -461,6 +646,101 @@ class TestAsyncRedfishAuthentication(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(
             context.exception.password_change_uri,
             "/redfish/v1/AccountService/Accounts/1",
+        )
+
+    async def test_successful_login_preserves_password_change_session(self):
+        """Test a restricted session remains usable to change a password."""
+        account_uri = "/redfish/v1/AccountService/Accounts/1"
+        session = FakeSession(
+            [
+                FakeResponse(body=b"{}"),
+                FakeResponse(
+                    status=201,
+                    headers={
+                        "X-Auth-Token": "restricted-token",
+                        "Location": (
+                            "/redfish/v1/SessionService/Sessions/1"
+                        ),
+                    },
+                    body=json.dumps(
+                        {
+                            "@Message.ExtendedInfo": [
+                                {
+                                    "MessageId": (
+                                        "Base.1.18.PasswordChangeRequired"
+                                    ),
+                                    "MessageArgs": [account_uri],
+                                }
+                            ]
+                        }
+                    ).encode("utf-8"),
+                ),
+                FakeResponse(status=204, body=b""),
+                FakeResponse(status=204, body=b""),
+            ]
+        )
+        client = AsyncRedfishClient(
+            base_url="https://bmc.example",
+            username="user",
+            password="password",
+            session=session,
+        )
+
+        with self.assertRaises(
+            RedfishPasswordChangeRequiredError
+        ) as context:
+            await client.login()
+        await client.patch(account_uri, body={"Password": "new-password"})
+        await client.logout()
+
+        self.assertEqual(context.exception.password_change_uri, account_uri)
+        self.assertEqual(
+            session.requests[2]["headers"].get("X-Auth-Token"),
+            "restricted-token",
+        )
+        self.assertEqual(
+            session.requests[3]["headers"].get("X-Auth-Token"),
+            "restricted-token",
+        )
+
+    async def test_context_manager_cleans_up_password_change_session(self):
+        """Test a failed context entry does not leak a restricted session."""
+        session = FakeSession(
+            [
+                FakeResponse(body=b"{}"),
+                FakeResponse(
+                    status=201,
+                    headers={
+                        "X-Auth-Token": "restricted-token",
+                        "Location": (
+                            "/redfish/v1/SessionService/Sessions/1"
+                        ),
+                    },
+                    body=(
+                        b'{"@Message.ExtendedInfo":[{'
+                        b'"MessageId":'
+                        b'"Base.1.18.PasswordChangeRequired",'
+                        b'"MessageArgs":['
+                        b'"/redfish/v1/AccountService/Accounts/1"]}]}'
+                    ),
+                ),
+                FakeResponse(status=204, body=b""),
+            ]
+        )
+        client = AsyncRedfishClient(
+            base_url="https://bmc.example",
+            username="user",
+            password="password",
+            session=session,
+        )
+
+        with self.assertRaises(RedfishPasswordChangeRequiredError):
+            async with client:
+                self.fail("Context body must not run")
+
+        self.assertEqual(
+            [request["method"] for request in session.requests],
+            ["GET", "POST", "DELETE"],
         )
 
     async def test_password_change_code_without_uri_is_classified(self):

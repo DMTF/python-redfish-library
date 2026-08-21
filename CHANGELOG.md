@@ -1,5 +1,8 @@
 # Change Log
 
+## [3.3.9] - 2026-08-21
+- Added support for asynchronous aiohttp Redfish clients
+
 ## [3.3.8] - 2026-08-14
 - Fixed usage of 'max_retry' when attempting to raise the 'RetriesExhaustedError' exception
 

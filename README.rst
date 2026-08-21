@@ -26,6 +26,12 @@ Installing
 
     pip install redfish
 
+The asynchronous client has an optional ``aiohttp`` dependency:
+
+.. code-block:: console
+
+    pip install redfish[aiohttp]
+
 Building from zip file source
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -51,6 +57,8 @@ Required external packages:
     requests
     requests-toolbelt
     requests-unixsocket
+
+The optional asynchronous client requires ``aiohttp>=3.9.0``.
 
 If installing from GitHub, you may install the external packages by running:
 
@@ -182,6 +190,45 @@ Each of the previous methods allows for the following arguments:
   - Overrides the max retry value specified when the Redfish object is created for this request.
   - This can be useful when a particular URI is known to take multiple retries.
   - The default value is ``None``, which indicates the object-defined max retry count is used.
+
+Asynchronous client
+~~~~~~~~~~~~~~~~~~~
+
+The additive asynchronous API uses ``aiohttp`` and does not change the existing synchronous client.  The caller must provide an ``aiohttp.ClientSession`` and remains responsible for closing it.  This allows an application to control connection pooling, TLS trust, proxy behavior, and session lifetime in one place.
+
+The asynchronous client supports Redfish session authentication and HTTP Basic authentication.  Authentication is explicit: call ``login`` after creating the client and ``logout`` when finished.  ``login`` uses Redfish session authentication by default, matching the synchronous client.  Redfish authentication requires HTTPS.  For compatibility with nonconforming services, session login uses the standard session collection URI and emits a warning if the service root incorrectly responds with HTTP 401.
+
+The asynchronous context manager creates and terminates a Redfish session.  It does not close the caller's ``aiohttp.ClientSession``:
+
+.. code-block:: python
+
+    import aiohttp
+
+    from redfish.aio import AsyncRedfishClient
+
+
+    async def get_service_root():
+        async with aiohttp.ClientSession() as session:
+            async with AsyncRedfishClient(
+                base_url="https://bmc.example",
+                username="user",
+                password="password",
+                session=session,
+                timeout=10,
+            ) as client:
+                return await client.get_service_root()
+
+To use HTTP Basic authentication, call ``await client.login(auth="basic")`` and ensure ``await client.logout()`` is called when finished.  Basic ``login`` configures the authentication header; the service validates the credentials when the client performs its next request.  An existing Redfish session can be supplied with the ``session_key`` argument and, when available, its resource URI with ``session_location``.  Supplying the location allows ``logout`` to terminate that session.
+
+If session login reports that the account password must change, ``login`` raises ``RedfishPasswordChangeRequiredError`` with the account URI in ``password_change_uri`` while retaining the restricted session.  The caller can use that client to change the password and then call ``logout``.  The asynchronous context manager instead cleans up a restricted session before propagating this exception because a failed ``__aenter__`` call cannot return the client to the context body.
+
+If an authenticated ``GET`` or ``HEAD`` receives HTTP 401, the client re-establishes an expired Redfish session once when credentials are available.  State-changing requests are never retried automatically.  Callers can therefore decide whether it is safe to repeat a failed ``POST``, ``PUT``, ``PATCH``, or ``DELETE``.
+
+Requests do not follow redirects, and advertised resource, action, and session targets are accepted only when they resolve to the configured Redfish origin.  Authentication headers provided by the caller cannot replace the client's configured Basic credentials or session token.  These rules prevent credentials from being sent to another origin.
+
+``get``, ``head``, ``post``, ``put``, ``patch``, and ``delete`` are coroutines with the same ``path``, ``args``, ``body``, ``headers``, and ``timeout`` concepts as the synchronous methods.  The returned response is fully read and cached before the coroutine returns, so it can be inspected after the underlying aiohttp response closes.
+
+The optional request ``timeout`` bounds each HTTP request.  TLS verification is controlled entirely by the injected ``ClientSession``.  Configure that session with an appropriate CA certificate or SSL context for a Redfish service using a private or self-signed certificate.
 
 Working with tasks
 ~~~~~~~~~~~~~~~~~~

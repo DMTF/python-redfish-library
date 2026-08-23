@@ -311,11 +311,18 @@ For example:
 Release Process
 ---------------
 
-1. Go to the "Actions" page
-2. Select the "Release and Publish" workflow
-3. Click "Run workflow"
-4. Fill out the form
-5. Click "Run workflow"
+Before the first release, configure a PyPI `Trusted Publisher
+<https://docs.pypi.org/trusted-publishers/adding-a-publisher/>`_ for the
+``DMTF/python-redfish-library`` repository, the ``main.yml`` workflow, and the
+``pypi`` environment.
+
+1. Update ``CHANGELOG.md``, ``setup.py``, and ``src/redfish/__init__.py`` with
+   the new version in a pull request.
+2. Merge the pull request.
+3. Create a GitHub release from the merged commit with the version as its tag.
+4. Publish the GitHub release. The release workflow builds the tagged sources,
+   verifies their version metadata, and publishes the distributions to PyPI
+   using Trusted Publishing.
 
 Copyright and License
 ---------------------

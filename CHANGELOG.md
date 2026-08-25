@@ -1,5 +1,8 @@
 # Change Log
 
+## [3.4.0] - 2026-08-25
+- Updated publication flow to leverage PyPI trusted publishing
+
 ## [3.3.9] - 2026-08-21
 - Added support for asynchronous aiohttp Redfish clients
 

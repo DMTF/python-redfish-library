@@ -1,92 +1,129 @@
-name: Release and Publish
+name: Publish to PyPI
+
 on:
   workflow_dispatch:
-    inputs:
-      version:
-        description: 'Version number'
-        required: true
-      changes_1:
-        description: 'Change entry'
-        required: true
-      changes_2:
-        description: 'Change entry'
-        required: false
-      changes_3:
-        description: 'Change entry'
-        required: false
-      changes_4:
-        description: 'Change entry'
-        required: false
-      changes_5:
-        description: 'Change entry'
-        required: false
-      changes_6:
-        description: 'Change entry'
-        required: false
-      changes_7:
-        description: 'Change entry'
-        required: false
-      changes_8:
-        description: 'Change entry'
-        required: false
+
+permissions: {}
+
+concurrency:
+  group: publish-to-pypi
+  cancel-in-progress: false
+
 jobs:
-  release_build:
-    name: Build the release
+  build:
+    name: Build release distributions
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
-    - uses: actions/checkout@v2
-      with:
-        token: ${{secrets.GITHUB_TOKEN}}
-    - name: Set up Python
-      uses: actions/setup-python@v2
-      with:
-        python-version: '3.x'
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install setuptools wheel twine
-    - name: Build the changelog text
-      run: |
-        echo 'CHANGES<<EOF' >> $GITHUB_ENV
-        echo "## [${{github.event.inputs.version}}] - $(date +'%Y-%m-%d')" >> $GITHUB_ENV
-        echo "- ${{github.event.inputs.changes_1}}" >> $GITHUB_ENV
-        if [[ -n "${{github.event.inputs.changes_2}}" ]]; then echo "- ${{github.event.inputs.changes_2}}" >> $GITHUB_ENV; fi
-        if [[ -n "${{github.event.inputs.changes_3}}" ]]; then echo "- ${{github.event.inputs.changes_3}}" >> $GITHUB_ENV; fi
-        if [[ -n "${{github.event.inputs.changes_4}}" ]]; then echo "- ${{github.event.inputs.changes_4}}" >> $GITHUB_ENV; fi
-        if [[ -n "${{github.event.inputs.changes_5}}" ]]; then echo "- ${{github.event.inputs.changes_5}}" >> $GITHUB_ENV; fi
-        if [[ -n "${{github.event.inputs.changes_6}}" ]]; then echo "- ${{github.event.inputs.changes_6}}" >> $GITHUB_ENV; fi
-        if [[ -n "${{github.event.inputs.changes_7}}" ]]; then echo "- ${{github.event.inputs.changes_7}}" >> $GITHUB_ENV; fi
-        if [[ -n "${{github.event.inputs.changes_8}}" ]]; then echo "- ${{github.event.inputs.changes_8}}" >> $GITHUB_ENV; fi
-        echo "" >> $GITHUB_ENV
-        echo 'EOF' >> $GITHUB_ENV
-    - name: Update version numbers
-      run: |
-        sed -i -E 's/      version=.+,/      version='\'${{github.event.inputs.version}}\'',/' setup.py
-        sed -i -E 's/__version__ = .+/__version__ = "'${{github.event.inputs.version}}'"/' src/redfish/__init__.py
-    - name: Update the changelog
-      run: |
-        ex CHANGELOG.md <<eof
-        3 insert
-        $CHANGES
-        .
-        xit
-        eof
-    - name: Commit and push the updates
-      run: |
-        git config user.name "GitHub Release Workflow"
-        git config user.email "<>"
-        git add CHANGELOG.md setup.py src/redfish/__init__.py
-        git commit -s -m "${{github.event.inputs.version}} versioning"
-        git push origin main
-    - name: Make the release
-      env:
-        GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
-      run: |
-        gh release create ${{github.event.inputs.version}} -t ${{github.event.inputs.version}} -n "Changes since last release:"$'\n\n'"$CHANGES"
-    - name: Build the distribution
-      run: |
-        python setup.py sdist bdist_wheel
-    - name: Upload to pypi
-      uses: pypa/gh-action-pypi-publish@release/v1
-      with:
-        password: ${{ secrets.PYPI_API_TOKEN }}
+      - name: Verify the workflow is running at a tag
+        env:
+          RELEASE_REF_TYPE: ${{ github.ref_type }}
+        run: |
+          if [[ "$RELEASE_REF_TYPE" != "tag" ]]; then
+            echo "This workflow must be dispatched at a release tag"
+            exit 1
+          fi
+
+      - name: Verify the GitHub release is published
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          gh release view "$RELEASE_TAG" \
+            --repo "$GITHUB_REPOSITORY" \
+            --json isDraft \
+            --jq .isDraft \
+            > "$RUNNER_TEMP/release-draft.txt"
+          read -r release_is_draft < "$RUNNER_TEMP/release-draft.txt"
+          if [[ "$release_is_draft" != "false" ]]; then
+            echo "The GitHub release for $RELEASE_TAG is still a draft"
+            exit 1
+          fi
+
+      - name: Check out the release tag
+        # v7.0.1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        # v7.0.0
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: "3.x"
+
+      - name: Verify release metadata
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          python - <<'PY'
+          import os
+          import re
+          from pathlib import Path
+
+          release_tag = os.environ["RELEASE_TAG"]
+          version_pattern = r"[0-9]+(?:\.[0-9]+){2}[a-zA-Z0-9.-]*"
+          if not re.fullmatch(version_pattern, release_tag):
+              raise SystemExit(f"Invalid release tag: {release_tag}")
+
+          setup_version = re.search(
+              r"^[ ]+version='([^']+)'",
+              Path("setup.py").read_text(),
+              re.MULTILINE,
+          )
+          package_version = re.search(
+              r'^__version__ = "([^"]+)"',
+              Path("src/redfish/__init__.py").read_text(),
+              re.MULTILINE,
+          )
+          if setup_version is None or package_version is None:
+              raise SystemExit("Unable to read package versions")
+          if setup_version.group(1) != release_tag:
+              raise SystemExit(
+                  "setup.py version does not match the release tag"
+              )
+          if package_version.group(1) != release_tag:
+              raise SystemExit(
+                  "redfish.__version__ does not match the release tag"
+              )
+          if f"## [{release_tag}]" not in Path("CHANGELOG.md").read_text():
+              raise SystemExit("CHANGELOG.md does not contain the release tag")
+          PY
+
+      - name: Build release distributions
+        run: |
+          python -m pip install build twine
+          python -m build
+          python -m twine check dist/*
+
+      - name: Store release distributions
+        # v7.0.1
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: release-distributions
+          path: dist/
+          if-no-files-found: error
+
+  publish:
+    name: Publish release distributions to PyPI
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/redfish
+    permissions:
+      id-token: write  # Exchange the GitHub OIDC token for PyPI credentials.
+    steps:
+      - name: Retrieve release distributions
+        # v8.0.1
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: release-distributions
+          path: dist/
+
+      - name: Publish release distributions to PyPI
+        # v1.14.2
+        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33
+        with:
+          attestations: true

@@ -1,0 +1,210 @@
+name: Update Version and Create Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Version number
+        required: true
+        type: string
+      changes_1:
+        description: Change entry
+        required: true
+        type: string
+      changes_2:
+        description: Change entry
+        required: false
+        type: string
+      changes_3:
+        description: Change entry
+        required: false
+        type: string
+      changes_4:
+        description: Change entry
+        required: false
+        type: string
+      changes_5:
+        description: Change entry
+        required: false
+        type: string
+      changes_6:
+        description: Change entry
+        required: false
+        type: string
+      changes_7:
+        description: Change entry
+        required: false
+        type: string
+      changes_8:
+        description: Change entry
+        required: false
+        type: string
+
+permissions: {}
+
+concurrency:
+  group: prepare-release
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    name: Update release metadata and create the release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # Commit metadata and create the tagged release.
+    steps:
+      - name: Verify the workflow is running from the default branch
+        env:
+          RELEASE_REF: ${{ github.ref }}
+        run: |
+          if [[ "$RELEASE_REF" != "refs/heads/main" ]]; then
+            echo "This workflow must be run from the main branch"
+            exit 1
+          fi
+
+      - name: Check out the default branch
+        # v7.0.1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          ref: main
+
+      - name: Set up Python
+        # v7.0.0
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: "3.x"
+
+      - name: Update release metadata
+        env:
+          CHANGE_1: ${{ inputs.changes_1 }}
+          CHANGE_2: ${{ inputs.changes_2 }}
+          CHANGE_3: ${{ inputs.changes_3 }}
+          CHANGE_4: ${{ inputs.changes_4 }}
+          CHANGE_5: ${{ inputs.changes_5 }}
+          CHANGE_6: ${{ inputs.changes_6 }}
+          CHANGE_7: ${{ inputs.changes_7 }}
+          CHANGE_8: ${{ inputs.changes_8 }}
+          VERSION: ${{ inputs.version }}
+        run: |
+          python - <<'PY'
+          import datetime
+          import os
+          import re
+          from pathlib import Path
+
+          version = os.environ["VERSION"]
+          version_pattern = r"[0-9]+(?:\.[0-9]+){2}[a-zA-Z0-9.-]*"
+          if not re.fullmatch(version_pattern, version):
+              raise SystemExit(f"Invalid version: {version}")
+
+          changes = []
+          for index in range(1, 9):
+              change = os.environ[f"CHANGE_{index}"].strip()
+              if "\n" in change or "\r" in change:
+                  raise SystemExit("Change entries must contain one line")
+              if change:
+                  changes.append(change)
+          if not changes:
+              raise SystemExit("At least one change entry is required")
+
+          version_bytes = version.encode("ascii")
+
+          def replace_version(path, pattern):
+              content = path.read_bytes()
+              updated, count = re.subn(
+                  pattern,
+                  lambda match: match.group(1) + version_bytes + match.group(2),
+                  content,
+                  flags=re.MULTILINE,
+              )
+              if count != 1:
+                  raise SystemExit(f"Unable to update version in {path}")
+              path.write_bytes(updated)
+
+          replace_version(
+              Path("setup.py"),
+              rb"^([ \t]+version=')[^']+(',\r?)$",
+          )
+          replace_version(
+              Path("src/redfish/__init__.py"),
+              rb'^(__version__ = ")[^"]+("\r?)$',
+          )
+
+          changelog_path = Path("CHANGELOG.md")
+          changelog = changelog_path.read_bytes()
+          if re.search(
+              rb"^## \[" + re.escape(version_bytes) + rb"\]",
+              changelog,
+              re.MULTILINE,
+          ):
+              raise SystemExit(f"CHANGELOG.md already contains {version}")
+
+          if b"# Change Log\r\n\r\n" in changelog:
+              newline = b"\r\n"
+          elif b"# Change Log\n\n" in changelog:
+              newline = b"\n"
+          else:
+              raise SystemExit("Unable to find the CHANGELOG.md heading")
+
+          heading = b"# Change Log" + newline * 2
+          date = datetime.datetime.now(datetime.UTC).date().isoformat()
+          entry_lines = [f"## [{version}] - {date}"]
+          entry_lines.extend(f"- {change}" for change in changes)
+          entry = newline.join(line.encode() for line in entry_lines) + newline * 2
+          changelog_path.write_bytes(
+              changelog.replace(heading, heading + entry, 1)
+          )
+
+          notes = "Changes since last release:\n\n"
+          notes += "\n".join(f"- {change}" for change in changes)
+          notes += "\n"
+          Path(os.environ["RUNNER_TEMP"], "release-notes.md").write_text(notes)
+          PY
+
+      - name: Commit release metadata
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ inputs.version }}
+        run: |
+          git diff --check
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add CHANGELOG.md setup.py src/redfish/__init__.py
+          if git diff --cached --quiet; then
+            echo "No release metadata changes were produced"
+            exit 1
+          fi
+          git commit --signoff --message "$VERSION versioning"
+          gh auth setup-git
+          git push origin HEAD:main
+
+      - name: Create the GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ inputs.version }}
+        run: |
+          git rev-parse HEAD > "$RUNNER_TEMP/release-commit.txt"
+          read -r release_commit < "$RUNNER_TEMP/release-commit.txt"
+          gh release create "$VERSION" \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$release_commit" \
+            --title "$VERSION" \
+            --notes-file "$RUNNER_TEMP/release-notes.md"
+
+  queue-publication:
+    name: Queue the tagged PyPI publication
+    needs: prepare
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write  # Dispatch the publishing workflow at the release tag.
+      contents: read
+    steps:
+      - name: Start the publishing workflow at the release tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ inputs.version }}
+        run: |
+          gh workflow run main.yml \
+            --repo "$GITHUB_REPOSITORY" \
+            --ref "$VERSION"

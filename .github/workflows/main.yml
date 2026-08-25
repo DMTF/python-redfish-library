@@ -1,11 +1,13 @@
-name: Release and Publish
+name: Publish to PyPI
 
 on:
-  release:
-    types:
-      - published
+  workflow_dispatch:
 
 permissions: {}
+
+concurrency:
+  group: publish-to-pypi
+  cancel-in-progress: false
 
 jobs:
   build:
@@ -14,12 +16,36 @@ jobs:
     permissions:
       contents: read
     steps:
+      - name: Verify the workflow is running at a tag
+        env:
+          RELEASE_REF_TYPE: ${{ github.ref_type }}
+        run: |
+          if [[ "$RELEASE_REF_TYPE" != "tag" ]]; then
+            echo "This workflow must be dispatched at a release tag"
+            exit 1
+          fi
+
+      - name: Verify the GitHub release is published
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          gh release view "$RELEASE_TAG" \
+            --repo "$GITHUB_REPOSITORY" \
+            --json isDraft \
+            --jq .isDraft \
+            > "$RUNNER_TEMP/release-draft.txt"
+          read -r release_is_draft < "$RUNNER_TEMP/release-draft.txt"
+          if [[ "$release_is_draft" != "false" ]]; then
+            echo "The GitHub release for $RELEASE_TAG is still a draft"
+            exit 1
+          fi
+
       - name: Check out the release tag
         # v7.0.1
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           persist-credentials: false
-          ref: ${{ github.event.release.tag_name }}
 
       - name: Set up Python
         # v7.0.0
@@ -29,7 +55,7 @@ jobs:
 
       - name: Verify release metadata
         env:
-          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          RELEASE_TAG: ${{ github.ref_name }}
         run: |
           python - <<'PY'
           import os
@@ -87,7 +113,7 @@ jobs:
       name: pypi
       url: https://pypi.org/p/redfish
     permissions:
-      id-token: write
+      id-token: write  # Exchange the GitHub OIDC token for PyPI credentials.
     steps:
       - name: Retrieve release distributions
         # v8.0.1

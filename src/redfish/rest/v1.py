@@ -1014,6 +1014,17 @@ class RestClientBase(object):
         headers = headers if headers else {}
 
         if auth == AuthMethod.BASIC:
+            warnings.warn(
+                "HTTP Basic authentication is being used. "
+                "Note: The IETF has highlighted security concerns with HTTP Basic authentication. "
+                "While HTTPS is required for the usage of HTTP Basic authentication, there are other "
+                "concerns implementers need to be aware of that RFC7617 documents. "
+                "This functionality can be restricted or disabled with the HTTPBasicAuth property "
+                "in the AccountService resource. "
+                "For improved performance and security, a client should use the session management "
+                "interface to create a Redfish login session.",
+                UserWarning
+            )
             auth_key = base64.b64encode(('%s:%s' % (self.__username,
                             self.__password)).encode('utf-8')).decode('utf-8')
             self.__authorization_key = 'Basic %s' % auth_key

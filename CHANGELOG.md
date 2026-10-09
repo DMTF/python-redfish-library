@@ -1,5 +1,8 @@
 # Change Log
 
+## [3.4.1] - 2026-10-09
+- Corrected max retry logic to raise RetriesExhaustedError when max retries is 0
+
 ## [3.4.0] - 2026-08-25
 - Updated publication flow to leverage PyPI trusted publishing
 

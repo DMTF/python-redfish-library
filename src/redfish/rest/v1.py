@@ -488,7 +488,7 @@ class RestClientBase(object):
         :type cafile: str
         :param timeout: Timeout in seconds for the initial connection
         :type timeout: int
-        :param max_retry: Number of times a request will retry after a timeout
+        :param max_retry: Number of times a request will retry after a timeout, including non-idempotent methods
         :type max_retry: int
         :param proxies: Dictionary containing protocol to proxy URL mappings
         :type proxies: dict
@@ -963,29 +963,25 @@ class RestClientBase(object):
             else:
                 break
 
-        if attempts <= max_retry:
+        if restresp is not None:
             if LOGGER.isEnabledFor(logging.DEBUG):
                 headerstr = ''
+                for header in restresp.getheaders():
+                    headerstr += '\t' + header[0] + ': ' + header[1] + '\n'
 
-                if restresp is not None:
-                    for header in restresp.getheaders():
-                        headerstr += '\t' + header[0] + ': ' + header[1] + '\n'
-
+                try:
                     try:
-                        try:
-                            restrespstr = json.dumps(json.loads(restresp.read), indent=4)
-                        except:
-                            restrespstr = restresp.read
-                        LOGGER.debug('HTTP RESPONSE for %s:\nCode: %s\n\nHeaders:\n' \
-                                 '%s\nBody Response of %s:\n%s\n'%\
-                                 (restresp.request.path,
-                                str(restresp._http_response.status_code)+ ' ' + \
-                                restresp._http_response.reason,
-                                headerstr, restresp.request.path, restrespstr))
+                        restrespstr = json.dumps(json.loads(restresp.read), indent=4)
                     except:
-                        LOGGER.debug('HTTP RESPONSE:\nCode:%s', restresp)
-                else:
-                    LOGGER.debug('HTTP RESPONSE: <No HTTP Response obtained>')
+                        restrespstr = restresp.read
+                    LOGGER.debug('HTTP RESPONSE for %s:\nCode: %s\n\nHeaders:\n' \
+                             '%s\nBody Response of %s:\n%s\n'%\
+                             (restresp.request.path,
+                            str(restresp._http_response.status_code)+ ' ' + \
+                            restresp._http_response.reason,
+                            headerstr, restresp.request.path, restrespstr))
+                except:
+                    LOGGER.debug('HTTP RESPONSE:\nCode:%s', restresp)
 
             return restresp
         else:

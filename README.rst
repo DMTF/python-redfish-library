@@ -97,7 +97,7 @@ There are several optional parameters:
 * ``sessionkey``: The session key to use with subsequent requests.  This can be used to bypass the login step.  The default value is ``None``.
 * ``cafile``: The file path to the CA certificate that issued the Redfish service's certificate.  The default value is ``None``.
 * ``timeout``: The number of seconds to wait for a response before closing the connection.  The default value is ``None``.
-* ``max_retry``: The number of retries to perform an operation before giving up.  The default value is ``10``.
+* ``max_retry``: The number of retries to perform an operation before giving up.  The default value is ``10``.  This includes non-idempotent methods, such as ``POST`` and ``PATCH``.
 * ``proxies``: A dictionary containing protocol to proxy URL mappings.  The default value is ``None``.  See `Using proxies`_.
 * ``check_connectivity``: A boolean value to determine whether the client immediately attempts a connection to the base_url. The default is ``True``.
 

@@ -956,8 +956,9 @@ class RestClientBase(object):
             except Exception as excp:
                 if not cause_exception:
                     cause_exception = excp
-                LOGGER.info('Retrying %s [%s]'% (path, excp))
-                time.sleep(1)
+                if attempts <= max_retry:
+                    LOGGER.info('Retrying %s [%s]'% (path, excp))
+                    time.sleep(1)
 
                 continue
             else:

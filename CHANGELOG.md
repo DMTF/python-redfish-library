@@ -1,5 +1,8 @@
 # Change Log
 
+## [3.4.2] - 2026-10-23
+- Removed unnecessary sleep after final retry
+
 ## [3.4.1] - 2026-10-09
 - Corrected max retry logic to raise RetriesExhaustedError when max retries is 0
 

@@ -74,6 +74,35 @@ class TestRedFishClient(unittest.TestCase):
 
         self.assertEqual(client.root, json.loads(dummy_root_data))
 
+    @mock.patch("requests.Session.request")
+    def test_basic_auth_emits_warning(self, mocked_request: mock.Mock) -> None:
+        """Test that using basic auth emits a security warning."""
+        import warnings
+        from redfish.rest.v1 import AuthMethod
+
+        dummy_root_data = '{"Links": {"Sessions": {"@data.id": "/redfish/v1/SessionService/Sessions"}}}'
+        root_resp = mock.Mock(content=dummy_root_data, status_code=200)
+        auth_resp = mock.Mock(content="", status_code=200)
+        mocked_request.side_effect = [
+            root_resp,
+            auth_resp,
+        ]
+        client = redfish_client(base_url=self.base_url, check_connectivity=False)
+        
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            client.login(username=self.username, password=self.password, auth=AuthMethod.BASIC)
+            
+            # Check that a warning was emitted
+            self.assertEqual(len(w), 1)
+            self.assertTrue(issubclass(w[0].category, UserWarning))
+            # Check that the warning contains the expected keywords
+            warning_message = str(w[0].message)
+            self.assertIn("HTTP Basic authentication", warning_message)
+            self.assertIn("security concerns", warning_message)
+            self.assertIn("RFC7617", warning_message)
+            self.assertIn("session management", warning_message)
+
 
 if __name__ == "__main__":
     unittest.main()
